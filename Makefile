@@ -1,9 +1,10 @@
 .DEFAULT_GOAL := help
 
 APP_NAME := Claude Monitor
+VERSION  := $(shell node -p "require('./package.json').version")
 OUT_DIR  := release
 APP_PATH := $(OUT_DIR)/mac-arm64/$(APP_NAME).app
-DMG_PATH := $(OUT_DIR)/$(APP_NAME)-0.1.0-arm64.dmg
+DMG_PATH := $(OUT_DIR)/$(APP_NAME)-$(VERSION)-arm64.dmg
 
 .PHONY: help install dev build test typecheck package open install-app dmg clean
 
