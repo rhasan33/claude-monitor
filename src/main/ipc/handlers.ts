@@ -2,6 +2,7 @@ import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { writeFile } from 'fs/promises'
 import { IPC_CHANNELS } from '../../shared/types'
 import type {
+  AggregatedOverview,
   BudgetSettings,
   ExportOverviewRequest,
   ExportResult,
@@ -21,7 +22,7 @@ import { readRecentActivity } from '../lib/historyReader'
 // `refresh()` away, not a background job — see README for why.
 let cachedEvents: UsageSourceEvent[] = []
 
-async function refresh(): Promise<RefreshResult> {
+export async function refresh(): Promise<RefreshResult> {
   const startedAt = Date.now()
   const warnings: string[] = []
   const events: UsageSourceEvent[] = []
@@ -43,6 +44,11 @@ async function refresh(): Promise<RefreshResult> {
     durationMs: Date.now() - startedAt,
     warnings
   }
+}
+
+/** Snapshot of the last refresh, for callers outside the IPC layer (e.g. the tray). */
+export function getCurrentOverview(): AggregatedOverview {
+  return buildOverview(cachedEvents)
 }
 
 async function exportOverview(request: ExportOverviewRequest): Promise<ExportResult> {

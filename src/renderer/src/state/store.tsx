@@ -101,12 +101,13 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const loadAll = useCallback(async (filters: OverviewParams) => {
+  // Re-fetches the already-scanned data for the given filters, without
+  // triggering another disk re-scan. Used both after an explicit refresh
+  // and after the main process pushes `dataChanged` (it has already
+  // re-scanned by that point — re-scanning again here would be redundant).
+  const loadViews = useCallback(async (filters: OverviewParams) => {
     dispatch({ type: 'LOAD_START' })
     try {
-      const result = await window.api.refresh()
-      dispatch({ type: 'REFRESH_RESULT', result })
-
       const [overview, projects, activity, profile, budget] = await Promise.all([
         window.api.getOverview(filters),
         window.api.getProjects(),
@@ -119,6 +120,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'LOAD_ERROR', message: error instanceof Error ? error.message : String(error) })
     }
   }, [])
+
+  const loadAll = useCallback(
+    async (filters: OverviewParams) => {
+      dispatch({ type: 'LOAD_START' })
+      try {
+        const result = await window.api.refresh()
+        dispatch({ type: 'REFRESH_RESULT', result })
+        await loadViews(filters)
+      } catch (error) {
+        dispatch({ type: 'LOAD_ERROR', message: error instanceof Error ? error.message : String(error) })
+      }
+    },
+    [loadViews]
+  )
 
   const refresh = useCallback(() => loadAll(state.filters), [loadAll, state.filters])
 
@@ -141,6 +156,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadAll({})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    return window.api.onDataChanged(() => {
+      void loadViews(state.filters)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.filters])
 
   const value = useMemo(
     () => ({ state, refresh, setFilters, setBudget }),

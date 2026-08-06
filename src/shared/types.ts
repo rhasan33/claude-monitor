@@ -178,5 +178,7 @@ export const IPC_CHANNELS = {
   exportOverview: 'usage:exportOverview',
   getBudget: 'usage:getBudget',
   setBudget: 'usage:setBudget',
-  getSessions: 'usage:getSessions'
+  getSessions: 'usage:getSessions',
+  /** Push-only: main -> renderer, sent after an auto-refresh. No ipcMain.handle for this one. */
+  dataChanged: 'usage:dataChanged'
 } as const

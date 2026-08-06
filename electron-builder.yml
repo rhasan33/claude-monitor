@@ -9,6 +9,12 @@ files:
   - "!**/*"
   - out/**/*
   - package.json
+# The `files` allowlist above deliberately excludes build/ (only electron-builder
+# itself reads build/icon.png|icns for the app bundle icon) — the tray needs its
+# own copy of the icon at runtime, so it's copied into Resources/ separately.
+extraResources:
+  - from: build/icon.png
+    to: icon.png
 mac:
   category: public.app-category.developer-tools
   target:
