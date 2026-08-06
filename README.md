@@ -15,7 +15,7 @@ Under active development. Current state:
 - [x] Usage aggregation (daily/model/project rollups, cache efficiency)
 - [x] Profile (`~/.claude.json`) and recent-activity (`history.jsonl`) readers
 - [x] IPC bridge between the main process and the renderer
-- [ ] Dashboard UI
+- [x] Dashboard UI (summary cards, token/cache/model/project charts, activity feed, filters)
 - [ ] Packaged build
 
 ## Requirements
