@@ -11,8 +11,8 @@ Under active development. Current state:
 - [x] Project scaffold (Electron + Vite + React + TypeScript)
 - [x] Pluggable usage-source abstraction (`src/main/sources`)
 - [x] Claude Code local-log parser (`src/main/sources/claude-code-local`)
-- [ ] Cost calculation from a versioned model-pricing table
-- [ ] Usage aggregation (daily/model/project rollups, cache efficiency)
+- [x] Cost calculation from a versioned model-pricing table
+- [x] Usage aggregation (daily/model/project rollups, cache efficiency)
 - [ ] IPC bridge between the main process and the renderer
 - [ ] Dashboard UI
 - [ ] Packaged build
