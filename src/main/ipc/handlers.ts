@@ -1,8 +1,18 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { writeFile } from 'fs/promises'
 import { IPC_CHANNELS } from '../../shared/types'
-import type { OverviewParams, RefreshResult, UsageSourceEvent } from '../../shared/types'
+import type {
+  BudgetSettings,
+  ExportOverviewRequest,
+  ExportResult,
+  OverviewParams,
+  RefreshResult,
+  UsageSourceEvent
+} from '../../shared/types'
 import { claudeCodeLocalSource } from '../sources/claude-code-local'
 import { buildOverview } from '../lib/aggregator'
+import { overviewToCsv, overviewToJson } from '../lib/exportOverview'
+import { readBudget, writeBudget } from '../lib/budgetStore'
 import { readProfile } from '../lib/claudeJson'
 import { readRecentActivity } from '../lib/historyReader'
 
@@ -35,6 +45,25 @@ async function refresh(): Promise<RefreshResult> {
   }
 }
 
+async function exportOverview(request: ExportOverviewRequest): Promise<ExportResult> {
+  const extension = request.format === 'csv' ? 'csv' : 'json'
+  const focusedWindow = BrowserWindow.getFocusedWindow() ?? undefined
+  const dialogOptions = {
+    defaultPath: `claude-monitor-overview-${new Date().toISOString().slice(0, 10)}.${extension}`,
+    filters: [{ name: extension.toUpperCase(), extensions: [extension] }]
+  }
+  const { canceled, filePath } = focusedWindow
+    ? await dialog.showSaveDialog(focusedWindow, dialogOptions)
+    : await dialog.showSaveDialog(dialogOptions)
+  if (canceled || !filePath) return { filePath: null }
+
+  const overview = buildOverview(cachedEvents, request.params)
+  const content = request.format === 'csv' ? overviewToCsv(overview) : overviewToJson(overview)
+  await writeFile(filePath, content, 'utf8')
+
+  return { filePath }
+}
+
 export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.refresh, () => refresh())
 
@@ -49,4 +78,12 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(IPC_CHANNELS.getProfile, () => readProfile())
+
+  ipcMain.handle(IPC_CHANNELS.exportOverview, (_event, request: ExportOverviewRequest) =>
+    exportOverview(request)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.getBudget, () => readBudget())
+
+  ipcMain.handle(IPC_CHANNELS.setBudget, (_event, budget: BudgetSettings) => writeBudget(budget))
 }

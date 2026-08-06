@@ -1,6 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '../shared/types'
-import type { OverviewParams, ProjectSummary, AggregatedOverview, ActivityItem, Profile, RefreshResult } from '../shared/types'
+import type {
+  OverviewParams,
+  ProjectSummary,
+  AggregatedOverview,
+  ActivityItem,
+  Profile,
+  RefreshResult,
+  ExportOverviewRequest,
+  ExportResult,
+  BudgetSettings
+} from '../shared/types'
 
 const api = {
   refresh: (): Promise<RefreshResult> => ipcRenderer.invoke(IPC_CHANNELS.refresh),
@@ -9,7 +19,11 @@ const api = {
   getProjects: (): Promise<ProjectSummary[]> => ipcRenderer.invoke(IPC_CHANNELS.getProjects),
   getRecentActivity: (limit?: number): Promise<ActivityItem[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.getRecentActivity, limit),
-  getProfile: (): Promise<Profile> => ipcRenderer.invoke(IPC_CHANNELS.getProfile)
+  getProfile: (): Promise<Profile> => ipcRenderer.invoke(IPC_CHANNELS.getProfile),
+  exportOverview: (request: ExportOverviewRequest): Promise<ExportResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.exportOverview, request),
+  getBudget: (): Promise<BudgetSettings> => ipcRenderer.invoke(IPC_CHANNELS.getBudget),
+  setBudget: (budget: BudgetSettings): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.setBudget, budget)
 }
 
 export type ClaudeMonitorApi = typeof api

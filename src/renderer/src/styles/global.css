@@ -109,6 +109,16 @@ table {
   justify-content: space-between;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .profile-header h1 {
   font-size: 20px;
   margin: 0 0 4px;
@@ -185,6 +195,12 @@ table {
   font-weight: 600;
 }
 
+.stat-delta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
 .grid {
   display: grid;
   gap: 16px;
@@ -205,6 +221,52 @@ table {
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0 0 12px;
+}
+
+.budget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.budget-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.budget-input-row input {
+  width: 100px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.budget-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--gridline);
+  overflow: hidden;
+}
+
+.budget-bar-fill {
+  height: 100%;
+  background: var(--good);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+.budget-bar-fill--over {
+  background: var(--critical);
+}
+
+.budget-summary {
+  margin-top: 8px;
+  font-size: 12px;
 }
 
 .filter-bar {

@@ -127,10 +127,30 @@ export interface RefreshResult {
   warnings: string[]
 }
 
+export interface BudgetSettings {
+  /** Null means no budget is configured. */
+  monthlyLimitUsd: number | null
+}
+
+export type ExportFormat = 'csv' | 'json'
+
+export interface ExportOverviewRequest {
+  format: ExportFormat
+  params?: OverviewParams
+}
+
+export interface ExportResult {
+  /** Null when the user canceled the save dialog. */
+  filePath: string | null
+}
+
 export const IPC_CHANNELS = {
   refresh: 'usage:refresh',
   getOverview: 'usage:getOverview',
   getProjects: 'usage:getProjects',
   getRecentActivity: 'usage:getRecentActivity',
-  getProfile: 'usage:getProfile'
+  getProfile: 'usage:getProfile',
+  exportOverview: 'usage:exportOverview',
+  getBudget: 'usage:getBudget',
+  setBudget: 'usage:setBudget'
 } as const

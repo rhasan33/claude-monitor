@@ -10,6 +10,8 @@ import { ActivityTimeline } from './components/ActivityTimeline'
 import { RecentActivityFeed } from './components/RecentActivityFeed'
 import { ToolUsageChart } from './components/ToolUsageChart'
 import { RefreshButton } from './components/RefreshButton'
+import { ExportButton } from './components/ExportButton'
+import { BudgetPanel } from './components/BudgetPanel'
 import { EmptyState } from './components/EmptyState'
 import { WarningBanner } from './components/WarningBanner'
 
@@ -20,7 +22,10 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <ProfileHeader profile={state.profile} />
-        <RefreshButton />
+        <div className="header-actions">
+          <ExportButton />
+          <RefreshButton />
+        </div>
       </header>
 
       <WarningBanner warnings={[...(state.lastRefresh?.warnings ?? []), ...(state.overview?.warnings ?? [])]} />
@@ -34,7 +39,12 @@ export default function App() {
       ) : (
         <>
           <FilterBar projects={state.projects} models={state.overview.byModel} />
-          <SummaryCards totals={state.overview.totals} cacheEfficiency={state.overview.cacheEfficiency} />
+          <SummaryCards
+            totals={state.overview.totals}
+            cacheEfficiency={state.overview.cacheEfficiency}
+            daily={state.overview.daily}
+          />
+          <BudgetPanel />
           <div className="grid grid-2">
             <TokenUsageChart daily={state.overview.daily} />
             <ActivityTimeline daily={state.overview.daily} />
