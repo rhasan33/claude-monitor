@@ -1,0 +1,40 @@
+.DEFAULT_GOAL := help
+
+APP_NAME := Claude Monitor
+OUT_DIR  := release
+APP_PATH := $(OUT_DIR)/mac-arm64/$(APP_NAME).app
+
+.PHONY: help install dev build test typecheck package open install-app clean
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install npm dependencies
+	npm install
+
+dev: ## Run in development mode (electron-vite + Electron)
+	npm run dev
+
+build: ## Type-check and build main/preload/renderer (no packaging)
+	npm run build
+
+test: ## Run the unit test suite
+	npm test
+
+typecheck: ## Type-check main, preload, and renderer
+	npm run typecheck
+
+package: ## Build the double-clickable .app in release/mac-arm64/
+	npm run package
+
+open: package ## Build (if needed) and open the app
+	open "$(APP_PATH)"
+
+install-app: package ## Copy the built app to /Applications (Spotlight/Launchpad launchable)
+	rm -rf "/Applications/$(APP_NAME).app"
+	cp -R "$(APP_PATH)" "/Applications/$(APP_NAME).app"
+	@echo "Installed to /Applications/$(APP_NAME).app"
+
+clean: ## Remove build output (out/ and release/)
+	rm -rf out $(OUT_DIR)

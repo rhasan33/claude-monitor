@@ -11,11 +11,12 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "test": "node --import tsx --test \"src/main/**/*.test.ts\""
+    "test": "node --import tsx --test \"src/main/**/*.test.ts\"",
+    "package": "electron-vite build && electron-builder --mac"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "private": true,
   "dependencies": {
     "date-fns": "^4.4.0",

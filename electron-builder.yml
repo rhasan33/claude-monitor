@@ -1,0 +1,20 @@
+appId: com.rakibamiya.claude-monitor
+productName: Claude Monitor
+directories:
+  output: release
+# A bare list here is ADDITIVE to electron-builder's default "**/*" pattern,
+# not a replacement — without the leading exclusion, node_modules (and
+# everything else in the repo) gets bundled anyway.
+files:
+  - "!**/*"
+  - out/**/*
+  - package.json
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dir
+      arch: [arm64]
+  # No paid Apple Developer certificate — ad-hoc sign instead. Without this,
+  # the unsigned arm64 bundle fails to launch at all ("app is damaged"),
+  # which is an OS code-signing requirement distinct from Gatekeeper.
+  identity: null
