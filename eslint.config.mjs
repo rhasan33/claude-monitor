@@ -44,6 +44,21 @@ export default [
     }
   },
   {
+    // Agent-facing driver script: runs under plain Node, but also embeds
+    // browser-context callbacks passed to Playwright's page.evaluate(), so
+    // it needs both sets of globals declared (ESLint's flat config has no
+    // implicit env — recommended doesn't assume Node or DOM).
+    files: ['.claude/skills/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        document: 'readonly',
+        setTimeout: 'readonly',
+      }
+    }
+  },
+  {
     files: ['src/renderer/**/*.{ts,tsx}'],
     plugins: {
       react,
