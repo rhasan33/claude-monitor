@@ -37,7 +37,19 @@ A `Makefile` wraps npm scripts for the packaged macOS app: `make open` (build if
 
 ### Releases
 
-Releases are published as GitHub Releases tagged `vX.Y.Z` (e.g. [v0.1.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.1.0), the first packaged build). Pushing a `v*.*.*` tag triggers `.github/workflows/release.yml`, which runs the same lint/typecheck/test gate as CI, then `npm run package` and attaches the resulting `.dmg` (`release/*.dmg`) to the release via `softprops/action-gh-release`. `electron-builder.yml` builds both an unpacked `dir` target and the `dmg` target for `arm64` — every tagged release should have a `.dmg` asset; if one is missing, check the `Release` workflow run for that tag.
+Releases are published as GitHub Releases tagged `vX.Y.Z` (e.g. [v0.1.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.1.0), [v0.2.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.2.0)). `electron-builder.yml` builds both an unpacked `dir` target and the `dmg` target for `arm64` — every tagged release should have a `.dmg` asset.
+
+Pushing a `v*.*.*` tag is *supposed* to trigger `.github/workflows/release.yml` (lint/typecheck/test, then `npm run package`, then attach `release/*.dmg` to the release via `softprops/action-gh-release`). As of `v0.2.0`, GitHub Actions is not triggering any runs at all for this repo (`push` events to `main` and tags both produced zero runs, `CI` included) — an account-level issue, not a problem with the workflow files. Until that's resolved, **publish releases manually**:
+
+```sh
+git tag vX.Y.Z && git push origin vX.Y.Z
+make dmg   # or: npm run package — produces release/Claude Monitor-X.Y.Z-arm64.dmg
+gh release create vX.Y.Z "release/Claude Monitor-X.Y.Z-arm64.dmg" --title vX.Y.Z --notes "..."
+# if a release for the tag already exists without an asset:
+gh release upload vX.Y.Z "release/Claude Monitor-X.Y.Z-arm64.dmg"
+```
+
+Before trusting the automated path again, confirm on GitHub (Settings → Actions → General, and Settings → Billing) that runs are actually being triggered — check `gh api repos/rhasan33/claude-monitor/actions/runs --jq '.total_count'` before and after a throwaway push.
 
 ## Architecture
 
