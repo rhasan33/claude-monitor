@@ -52,6 +52,13 @@ const COMMANDS = {
     console.log('screenshot:', f)
   },
 
+  async 'mouse-move'(argLine) {
+    if (!page) return console.log('ERROR: launch first')
+    const [x, y] = argLine.split(' ').map(Number)
+    await page.mouse.move(x, y)
+    console.log('mouse-move', x, y, '→ OK')
+  },
+
   async click(sel) {
     if (!page) return console.log('ERROR: launch first')
     const r = await page.evaluate((s) => {

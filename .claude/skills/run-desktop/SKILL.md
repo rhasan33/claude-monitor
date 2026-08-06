@@ -49,6 +49,7 @@ Screenshots land in `/tmp/shots/` (override with `SCREENSHOT_DIR`).
 | `launch` | launch the app, wait for the main window |
 | `ss [name]` | screenshot → `/tmp/shots/<name>.png` |
 | `click <css-sel>` | click element (via DOM, not coordinates) |
+| `mouse-move <x> <y>` | real pointer move to viewport coordinates — use to dismiss chart hover tooltips before a screenshot (a synthetic DOM `mousemove` event doesn't reliably clear recharts' hover state) |
 | `click-text <text>` | click button/link containing text |
 | `type <text>` / `press <key>` | keyboard input at whatever has real focus |
 | `fill <css-sel> <text>` | set a React-controlled input's value via the native setter + `input` event (use this instead of `click`+`type` for form fields) |

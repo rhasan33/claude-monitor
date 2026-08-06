@@ -13,9 +13,9 @@ mac:
   category: public.app-category.developer-tools
   target:
     - target: dir
-      arch: [arm64]
+      arch: [universal]
     - target: dmg
-      arch: [arm64]
+      arch: [universal]
   # No paid Apple Developer certificate — ad-hoc sign instead. Without this,
   # the unsigned arm64 bundle fails to launch at all ("app is damaged"),
   # which is an OS code-signing requirement distinct from Gatekeeper.

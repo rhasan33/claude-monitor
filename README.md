@@ -6,6 +6,8 @@ A desktop app that gives you a 360° view of how you use [Claude Code](https://c
 
 Built with Electron, TypeScript, and React.
 
+![Claude Monitor dashboard](docs/screenshot.png)
+
 ## Status
 
 Under active development. Current state:
@@ -46,7 +48,7 @@ npm run dev
 | `npm run typecheck` | Type-check the main, preload, and renderer processes |
 | `npm test` | Run the unit test suite |
 | `npm run lint` | Lint the codebase with ESLint |
-| `npm run package` | Build a double-clickable `.app` and a `.dmg` installer (macOS) into `release/` |
+| `npm run package` | Build a double-clickable universal (Intel + Apple Silicon) `.app` and a `.dmg` installer (macOS) into `release/` |
 
 A `Makefile` wraps these for convenience — run `make` with no arguments to see the full list. The most relevant for day-to-day use:
 

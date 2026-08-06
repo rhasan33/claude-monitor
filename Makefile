@@ -3,8 +3,8 @@
 APP_NAME := Claude Monitor
 VERSION  := $(shell node -p "require('./package.json').version")
 OUT_DIR  := release
-APP_PATH := $(OUT_DIR)/mac-arm64/$(APP_NAME).app
-DMG_PATH := $(OUT_DIR)/$(APP_NAME)-$(VERSION)-arm64.dmg
+APP_PATH := $(OUT_DIR)/mac-universal/$(APP_NAME).app
+DMG_PATH := $(OUT_DIR)/$(APP_NAME)-$(VERSION)-universal.dmg
 
 .PHONY: help install dev build test typecheck package open install-app dmg clean
 
@@ -27,7 +27,7 @@ test: ## Run the unit test suite
 typecheck: ## Type-check main, preload, and renderer
 	npm run typecheck
 
-package: ## Build the double-clickable .app in release/mac-arm64/
+package: ## Build the double-clickable universal (Intel + Apple Silicon) .app in release/mac-universal/
 	npm run package
 
 open: package ## Build (if needed) and open the app
