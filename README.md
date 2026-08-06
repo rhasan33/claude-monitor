@@ -1,5 +1,7 @@
 # Claude Monitor
 
+[![CI](https://github.com/rhasan33/claude-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/rhasan33/claude-monitor/actions/workflows/ci.yml)
+
 A desktop app that gives you a 360° view of how you use [Claude Code](https://claude.com/claude-code): token usage, cost, prompt-cache efficiency, and per-project/per-model breakdowns — all computed locally from the session logs already on your machine. Nothing is uploaded anywhere.
 
 Built with Electron, TypeScript, and React.
@@ -43,6 +45,7 @@ npm run dev
 | `npm run build` | Type-check and build the app for production |
 | `npm run typecheck` | Type-check the main, preload, and renderer processes |
 | `npm test` | Run the unit test suite |
+| `npm run lint` | Lint the codebase with ESLint |
 | `npm run package` | Build a double-clickable `.app` (macOS) into `release/mac-arm64/` |
 
 A `Makefile` wraps these for convenience — run `make` with no arguments to see the full list. The two most relevant for day-to-day use:

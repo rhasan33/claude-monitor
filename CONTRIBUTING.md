@@ -11,12 +11,15 @@ npm run dev
 
 ## Before opening a PR
 
-Both must pass:
+All three must pass (CI runs the same three on every push/PR):
 
 ```sh
-npm test
+npm run lint
 npm run typecheck
+npm test
 ```
+
+Note on tooling: ESLint here uses Babel's parser rather than `typescript-eslint`, because `typescript-eslint` doesn't yet support the TypeScript 7 native compiler this repo runs on. That means ESLint has no type information — `no-unused-vars`/`no-undef` are disabled for `.ts`/`.tsx` files since they misfire once Babel strips type-only syntax. `tsc` (via `noUnusedLocals`/`noUnusedParameters`) is what actually catches unused imports/variables. If `typescript-eslint` adds TS 7 support later, switching back would restore type-aware lint rules.
 
 ## Commit style
 

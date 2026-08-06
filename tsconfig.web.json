@@ -10,7 +10,9 @@
     "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
-    "noEmit": true
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": ["src/renderer/src/**/*", "src/shared/**/*"]
 }
