@@ -19,6 +19,10 @@ export function formatUsd(value: unknown): string {
   }).format(toFiniteNumber(value))
 }
 
+export function formatPct(value: unknown): string {
+  return `${toFiniteNumber(value).toFixed(0)}%`
+}
+
 export function formatDateLabel(dateKey: unknown): string {
   if (typeof dateKey !== 'string') return ''
   const [, month, day] = dateKey.split('-')
