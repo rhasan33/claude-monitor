@@ -13,6 +13,7 @@ Under active development. Current state:
 - [x] Claude Code local-log parser (`src/main/sources/claude-code-local`)
 - [x] Cost calculation from a versioned model-pricing table
 - [x] Usage aggregation (daily/model/project rollups, cache efficiency)
+- [x] Profile (`~/.claude.json`) and recent-activity (`history.jsonl`) readers
 - [ ] IPC bridge between the main process and the renderer
 - [ ] Dashboard UI
 - [ ] Packaged build
