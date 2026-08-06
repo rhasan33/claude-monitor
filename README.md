@@ -46,16 +46,17 @@ npm run dev
 | `npm run typecheck` | Type-check the main, preload, and renderer processes |
 | `npm test` | Run the unit test suite |
 | `npm run lint` | Lint the codebase with ESLint |
-| `npm run package` | Build a double-clickable `.app` (macOS) into `release/mac-arm64/` |
+| `npm run package` | Build a double-clickable `.app` and a `.dmg` installer (macOS) into `release/` |
 
-A `Makefile` wraps these for convenience — run `make` with no arguments to see the full list. The two most relevant for day-to-day use:
+A `Makefile` wraps these for convenience — run `make` with no arguments to see the full list. The most relevant for day-to-day use:
 
 ```sh
 make open        # build the .app (if needed) and launch it
 make install-app # copy the .app to /Applications, so it's launchable from Spotlight/Launchpad like any other app
+make dmg         # build the .dmg installer and reveal it in Finder
 ```
 
-The packaged app is unsigned (no paid Apple Developer certificate) but ad-hoc signed, which is enough to launch normally on this machine via double-click. If you ever move the `.app` to another Mac through a channel that applies macOS's quarantine flag (a download link, AirDrop, email, etc.), that Mac will show a one-time "unidentified developer" prompt — right-click → Open resolves it.
+The packaged app is unsigned (no paid Apple Developer certificate) but ad-hoc signed, which is enough to launch normally on this machine via double-click. If you ever move the `.app` or the `.dmg` to another Mac through a channel that applies macOS's quarantine flag (a download link, AirDrop, email, etc.), that Mac will show a one-time "unidentified developer" prompt — right-click → Open resolves it.
 
 ## How it works
 

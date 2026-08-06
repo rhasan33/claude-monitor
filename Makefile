@@ -3,8 +3,9 @@
 APP_NAME := Claude Monitor
 OUT_DIR  := release
 APP_PATH := $(OUT_DIR)/mac-arm64/$(APP_NAME).app
+DMG_PATH := $(OUT_DIR)/$(APP_NAME)-0.1.0-arm64.dmg
 
-.PHONY: help install dev build test typecheck package open install-app clean
+.PHONY: help install dev build test typecheck package open install-app dmg clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -35,6 +36,9 @@ install-app: package ## Copy the built app to /Applications (Spotlight/Launchpad
 	rm -rf "/Applications/$(APP_NAME).app"
 	cp -R "$(APP_PATH)" "/Applications/$(APP_NAME).app"
 	@echo "Installed to /Applications/$(APP_NAME).app"
+
+dmg: package ## Build the .dmg installer and reveal it in Finder
+	open -R "$(DMG_PATH)"
 
 clean: ## Remove build output (out/ and release/)
 	rm -rf out $(OUT_DIR)
