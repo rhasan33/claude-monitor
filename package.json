@@ -1,6 +1,6 @@
 {
   "name": "claude-monitor",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A 360-degree local dashboard for how you use Claude Code: token usage, cost, cache efficiency, and per-project/model breakdowns.",
   "main": "./out/main/index.js",
   "engines": {
