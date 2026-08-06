@@ -116,6 +116,21 @@ export interface OverviewParams {
   modelFilter?: string
 }
 
+export interface SessionSummary {
+  sessionId: string
+  projectPath: string
+  models: string[]
+  messageCount: number
+  inputTokens: number
+  outputTokens: number
+  cacheCreationInputTokens: number
+  cacheReadInputTokens: number
+  costUsd: number
+  toolUsage: ToolUsageCount[]
+  startedAt: string
+  endedAt: string
+}
+
 export interface ActivityItem {
   timestamp: string
   display: string
@@ -162,5 +177,6 @@ export const IPC_CHANNELS = {
   getProfile: 'usage:getProfile',
   exportOverview: 'usage:exportOverview',
   getBudget: 'usage:getBudget',
-  setBudget: 'usage:setBudget'
+  setBudget: 'usage:setBudget',
+  getSessions: 'usage:getSessions'
 } as const

@@ -7,6 +7,7 @@ import type {
   OverviewParams,
   OverviewTotals,
   ProjectSummary,
+  SessionSummary,
   ToolUsageCount,
   UsageSourceEvent
 } from '../../shared/types'
@@ -236,4 +237,56 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
     warnings,
     generatedAt: new Date().toISOString()
   }
+}
+
+/** Groups one project's events by session — the drill-down behind `ProjectSummary`. */
+export function buildSessionSummaries(events: UsageSourceEvent[], projectPath: string): SessionSummary[] {
+  const sessions = new Map<
+    string,
+    Accumulator & { toolUsage: Map<string, number>; models: Set<string>; firstMs: number; lastMs: number }
+  >()
+
+  for (const event of events) {
+    if (event.projectPath !== projectPath) continue
+
+    const session = sessions.get(event.sessionId) ?? {
+      ...emptyAccumulator(),
+      toolUsage: new Map<string, number>(),
+      models: new Set<string>(),
+      firstMs: event.timestampMs,
+      lastMs: event.timestampMs
+    }
+    session.firstMs = Math.min(session.firstMs, event.timestampMs)
+    session.lastMs = Math.max(session.lastMs, event.timestampMs)
+    if (event.model) session.models.add(event.model)
+    for (const toolName of event.toolUseNames) {
+      session.toolUsage.set(toolName, (session.toolUsage.get(toolName) ?? 0) + 1)
+    }
+
+    if (event.usage) {
+      const { costUsd } = calculateCost(event.usage, event.model, event.timestampMs)
+      addUsage(session, event, costUsd)
+    }
+
+    sessions.set(event.sessionId, session)
+  }
+
+  return Array.from(sessions.entries())
+    .map(([sessionId, acc]) => ({
+      sessionId,
+      projectPath,
+      models: Array.from(acc.models),
+      messageCount: acc.messageCount,
+      inputTokens: acc.inputTokens,
+      outputTokens: acc.outputTokens,
+      cacheCreationInputTokens: acc.cacheCreationInputTokens,
+      cacheReadInputTokens: acc.cacheReadInputTokens,
+      costUsd: acc.costUsd,
+      toolUsage: Array.from(acc.toolUsage.entries())
+        .map(([toolName, count]) => ({ toolName, count }))
+        .sort((a, b) => b.count - a.count),
+      startedAt: new Date(acc.firstMs).toISOString(),
+      endedAt: new Date(acc.lastMs).toISOString()
+    }))
+    .sort((a, b) => b.endedAt.localeCompare(a.endedAt))
 }

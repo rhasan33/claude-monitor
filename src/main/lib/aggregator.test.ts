@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildOverview } from './aggregator'
+import { buildOverview, buildSessionSummaries } from './aggregator'
 import type { UsageSourceEvent } from '../../shared/types'
 
 function makeEvent(overrides: Partial<UsageSourceEvent> = {}): UsageSourceEvent {
@@ -137,4 +137,54 @@ test('heatmap counts events even without a usage field, unlike token/cost accumu
   const cell = overview.activityHeatmap.find((c) => c.dayOfWeek === d.getDay() && c.hour === d.getHours())
   assert.equal(cell?.messageCount, 1)
   assert.equal(overview.totals.messageCount, 0)
+})
+
+test('buildSessionSummaries groups only the requested project, ignoring other projects', () => {
+  const sessions = buildSessionSummaries(
+    [
+      makeEvent({ sessionId: 's1', projectPath: '/a' }),
+      makeEvent({ sessionId: 's1', projectPath: '/a' }),
+      makeEvent({ sessionId: 's2', projectPath: '/b' })
+    ],
+    '/a'
+  )
+  assert.equal(sessions.length, 1)
+  assert.equal(sessions[0].sessionId, 's1')
+  assert.equal(sessions[0].messageCount, 2)
+  assert.equal(sessions[0].inputTokens, 2_000_000)
+  assert.equal(sessions[0].costUsd, 6)
+})
+
+test('buildSessionSummaries tracks tool usage, models, and start/end bounds per session', () => {
+  const t1 = Date.parse('2026-08-01T10:00:00.000Z')
+  const t2 = Date.parse('2026-08-01T11:00:00.000Z')
+  const sessions = buildSessionSummaries(
+    [
+      makeEvent({ sessionId: 's1', projectPath: '/a', timestampMs: t1, model: 'claude-sonnet-5', toolUseNames: ['Bash'] }),
+      makeEvent({ sessionId: 's1', projectPath: '/a', timestampMs: t2, model: 'claude-opus-5', toolUseNames: ['Bash', 'Read'] })
+    ],
+    '/a'
+  )
+  assert.equal(sessions.length, 1)
+  assert.deepEqual(sessions[0].models.sort(), ['claude-opus-5', 'claude-sonnet-5'])
+  assert.deepEqual(sessions[0].toolUsage[0], { toolName: 'Bash', count: 2 })
+  assert.deepEqual(sessions[0].toolUsage[1], { toolName: 'Read', count: 1 })
+  assert.equal(sessions[0].startedAt, new Date(t1).toISOString())
+  assert.equal(sessions[0].endedAt, new Date(t2).toISOString())
+})
+
+test('buildSessionSummaries sorts sessions by most recently active first', () => {
+  const older = Date.parse('2026-08-01T10:00:00.000Z')
+  const newer = Date.parse('2026-08-02T10:00:00.000Z')
+  const sessions = buildSessionSummaries(
+    [
+      makeEvent({ sessionId: 'older', projectPath: '/a', timestampMs: older }),
+      makeEvent({ sessionId: 'newer', projectPath: '/a', timestampMs: newer })
+    ],
+    '/a'
+  )
+  assert.deepEqual(
+    sessions.map((s) => s.sessionId),
+    ['newer', 'older']
+  )
 })

@@ -9,7 +9,8 @@ import type {
   RefreshResult,
   ExportOverviewRequest,
   ExportResult,
-  BudgetSettings
+  BudgetSettings,
+  SessionSummary
 } from '../shared/types'
 
 const api = {
@@ -23,7 +24,9 @@ const api = {
   exportOverview: (request: ExportOverviewRequest): Promise<ExportResult> =>
     ipcRenderer.invoke(IPC_CHANNELS.exportOverview, request),
   getBudget: (): Promise<BudgetSettings> => ipcRenderer.invoke(IPC_CHANNELS.getBudget),
-  setBudget: (budget: BudgetSettings): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.setBudget, budget)
+  setBudget: (budget: BudgetSettings): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.setBudget, budget),
+  getSessions: (projectPath: string): Promise<SessionSummary[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.getSessions, projectPath)
 }
 
 export type ClaudeMonitorApi = typeof api

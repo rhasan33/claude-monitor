@@ -10,7 +10,7 @@ import type {
   UsageSourceEvent
 } from '../../shared/types'
 import { claudeCodeLocalSource } from '../sources/claude-code-local'
-import { buildOverview } from '../lib/aggregator'
+import { buildOverview, buildSessionSummaries } from '../lib/aggregator'
 import { overviewToCsv, overviewToJson } from '../lib/exportOverview'
 import { readBudget, writeBudget } from '../lib/budgetStore'
 import { readProfile } from '../lib/claudeJson'
@@ -86,4 +86,8 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.getBudget, () => readBudget())
 
   ipcMain.handle(IPC_CHANNELS.setBudget, (_event, budget: BudgetSettings) => writeBudget(budget))
+
+  ipcMain.handle(IPC_CHANNELS.getSessions, (_event, projectPath: string) =>
+    buildSessionSummaries(cachedEvents, projectPath)
+  )
 }

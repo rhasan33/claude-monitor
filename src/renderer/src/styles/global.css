@@ -377,6 +377,40 @@ th {
   font-weight: 500;
 }
 
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: var(--gridline);
+}
+
+.session-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.session-detail-row td {
+  background: var(--page);
+}
+
+.session-tool-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-tool-chip {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .cache-bar {
   display: flex;
   height: 10px;

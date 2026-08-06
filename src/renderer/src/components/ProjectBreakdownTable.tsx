@@ -1,7 +1,13 @@
 import type { ProjectSummary } from '../../../shared/types'
 import { formatTokens, formatUsd } from '../lib/format'
 
-export function ProjectBreakdownTable({ projects }: { projects: ProjectSummary[] }) {
+export function ProjectBreakdownTable({
+  projects,
+  onSelectProject
+}: {
+  projects: ProjectSummary[]
+  onSelectProject: (project: ProjectSummary) => void
+}) {
   return (
     <div className="panel">
       <h2>By project</h2>
@@ -19,7 +25,7 @@ export function ProjectBreakdownTable({ projects }: { projects: ProjectSummary[]
           </thead>
           <tbody>
             {projects.map((project) => (
-              <tr key={project.projectPath}>
+              <tr key={project.projectPath} className="clickable-row" onClick={() => onSelectProject(project)}>
                 <td title={project.projectPath}>{project.displayName}</td>
                 <td>{project.sessionCount}</td>
                 <td>{project.messageCount}</td>
