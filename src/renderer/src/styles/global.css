@@ -269,6 +269,58 @@ table {
   font-size: 12px;
 }
 
+.heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-x: auto;
+}
+
+.heatmap-hour-row,
+.heatmap-row {
+  display: grid;
+  grid-template-columns: 36px repeat(24, minmax(14px, 1fr));
+  gap: 2px;
+  align-items: center;
+}
+
+.heatmap-day-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.heatmap-hour-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  min-width: 14px;
+}
+
+.heatmap-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.heatmap-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
 .filter-bar {
   display: flex;
   align-items: center;

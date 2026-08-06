@@ -8,6 +8,7 @@ import { ProjectBreakdownTable } from './components/ProjectBreakdownTable'
 import { CacheEfficiencyPanel } from './components/CacheEfficiencyPanel'
 import { CacheEfficiencyTrendChart } from './components/CacheEfficiencyTrendChart'
 import { ActivityTimeline } from './components/ActivityTimeline'
+import { ActivityHeatmap } from './components/ActivityHeatmap'
 import { RecentActivityFeed } from './components/RecentActivityFeed'
 import { ToolUsageChart } from './components/ToolUsageChart'
 import { RefreshButton } from './components/RefreshButton'
@@ -55,6 +56,7 @@ export default function App() {
             <CacheEfficiencyPanel cacheEfficiency={state.overview.cacheEfficiency} />
           </div>
           <CacheEfficiencyTrendChart daily={state.overview.daily} />
+          <ActivityHeatmap cells={state.overview.activityHeatmap} />
           <ProjectBreakdownTable projects={state.overview.byProject} />
           <div className="grid grid-2">
             <ToolUsageChart toolUsage={state.overview.toolUsage} />

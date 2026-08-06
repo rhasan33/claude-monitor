@@ -107,3 +107,34 @@ test('counts tool usage across events', () => {
   ])
   assert.deepEqual(overview.toolUsage[0], { toolName: 'Bash', count: 2 })
 })
+
+test('buckets activity into a dense 7x24 heatmap, keyed by local day-of-week and hour', () => {
+  const t1 = Date.parse('2026-08-01T10:00:00.000Z')
+  const t2 = Date.parse('2026-08-01T10:30:00.000Z') // same local day+hour as t1
+  const t3 = Date.parse('2026-08-03T22:15:00.000Z')
+
+  const overview = buildOverview([makeEvent({ timestampMs: t1 }), makeEvent({ timestampMs: t2 }), makeEvent({ timestampMs: t3 })])
+
+  assert.equal(overview.activityHeatmap.length, 168)
+  assert.equal(
+    overview.activityHeatmap.filter((c) => c.messageCount > 0).reduce((sum, c) => sum + c.messageCount, 0),
+    3
+  )
+
+  const d1 = new Date(t1)
+  const cell1 = overview.activityHeatmap.find((c) => c.dayOfWeek === d1.getDay() && c.hour === d1.getHours())
+  assert.equal(cell1?.messageCount, 2)
+
+  const d3 = new Date(t3)
+  const cell3 = overview.activityHeatmap.find((c) => c.dayOfWeek === d3.getDay() && c.hour === d3.getHours())
+  assert.equal(cell3?.messageCount, 1)
+})
+
+test('heatmap counts events even without a usage field, unlike token/cost accumulators', () => {
+  const t = Date.parse('2026-08-01T10:00:00.000Z')
+  const overview = buildOverview([makeEvent({ timestampMs: t, usage: undefined })])
+  const d = new Date(t)
+  const cell = overview.activityHeatmap.find((c) => c.dayOfWeek === d.getDay() && c.hour === d.getHours())
+  assert.equal(cell?.messageCount, 1)
+  assert.equal(overview.totals.messageCount, 0)
+})

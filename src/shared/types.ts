@@ -89,6 +89,14 @@ export interface OverviewTotals {
   projectCount: number
 }
 
+export interface HeatmapCell {
+  /** 0 = Sunday .. 6 = Saturday, local time. */
+  dayOfWeek: number
+  /** 0-23, local time. */
+  hour: number
+  messageCount: number
+}
+
 export interface AggregatedOverview {
   totals: OverviewTotals
   daily: DailyUsage[]
@@ -96,6 +104,8 @@ export interface AggregatedOverview {
   byProject: ProjectSummary[]
   cacheEfficiency: CacheEfficiency
   toolUsage: ToolUsageCount[]
+  /** Always 168 cells (7 days x 24 hours), in dayOfWeek-then-hour order, zero-filled. */
+  activityHeatmap: HeatmapCell[]
   warnings: string[]
   generatedAt: string
 }

@@ -2,6 +2,7 @@ import type {
   AggregatedOverview,
   CacheEfficiency,
   DailyUsage,
+  HeatmapCell,
   ModelUsage,
   OverviewParams,
   OverviewTotals,
@@ -89,6 +90,8 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
     Accumulator & { sessionIds: Set<string>; firstSeenMs: number; lastSeenMs: number }
   >()
   const toolUsage = new Map<string, number>()
+  // [dayOfWeek][hour], both local time — dense grid, always 7x24.
+  const heatmap: number[][] = Array.from({ length: 7 }, () => new Array(24).fill(0))
 
   let cacheCreationTokens = 0
   let cacheReadTokens = 0
@@ -99,6 +102,9 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
 
     sessionIds.add(event.sessionId)
     projectPaths.add(event.projectPath)
+
+    const eventDate = new Date(event.timestampMs)
+    heatmap[eventDate.getDay()][eventDate.getHours()] += 1
 
     for (const toolName of event.toolUseNames) {
       toolUsage.set(toolName, (toolUsage.get(toolName) ?? 0) + 1)
@@ -194,6 +200,13 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
     .map(([toolName, count]) => ({ toolName, count }))
     .sort((a, b) => b.count - a.count)
 
+  const activityHeatmap: HeatmapCell[] = []
+  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+    for (let hour = 0; hour < 24; hour++) {
+      activityHeatmap.push({ dayOfWeek, hour, messageCount: heatmap[dayOfWeek][hour] })
+    }
+  }
+
   const cacheEfficiency: CacheEfficiency = {
     cacheReadTokens,
     cacheCreationTokens,
@@ -219,6 +232,7 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
     byProject: projectSummaries,
     cacheEfficiency,
     toolUsage: toolUsageCounts,
+    activityHeatmap,
     warnings,
     generatedAt: new Date().toISOString()
   }
