@@ -269,6 +269,16 @@ table {
   font-size: 12px;
 }
 
+.budget-projection {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.budget-projection--over {
+  color: var(--serious);
+}
+
 .heatmap {
   display: flex;
   flex-direction: column;

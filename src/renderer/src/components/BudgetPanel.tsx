@@ -1,17 +1,7 @@
 import { useMemo, useState } from 'react'
-import type { DailyUsage } from '../../../shared/types'
+import { currentMonthCost, projectMonthEndCost } from '../../../shared/monthToDate'
 import { useApp } from '../state/store'
 import { formatUsd } from '../lib/format'
-
-/**
- * Sums this calendar month's cost from `daily`, independent of whatever
- * project/model/date filters are active — a budget tracks real spend, not
- * a filtered slice of it.
- */
-function currentMonthCost(daily: DailyUsage[]): number {
-  const prefix = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
-  return daily.filter((d) => d.date.startsWith(prefix)).reduce((sum, d) => sum + d.costUsd, 0)
-}
 
 export function BudgetPanel() {
   const { state, setBudget } = useApp()
@@ -21,9 +11,11 @@ export function BudgetPanel() {
   const [saving, setSaving] = useState(false)
 
   const spent = useMemo(() => currentMonthCost(state.overview?.daily ?? []), [state.overview])
+  const projection = useMemo(() => projectMonthEndCost(state.overview?.daily ?? []), [state.overview])
   const limit = state.budget.monthlyLimitUsd
   const pct = limit ? Math.min((spent / limit) * 100, 100) : 0
   const overBudget = limit != null && spent > limit
+  const projectedOverBudget = limit != null && projection != null && projection.projectedTotal > limit
 
   const handleSave = async (): Promise<void> => {
     const parsed = Number(input)
@@ -67,6 +59,12 @@ export function BudgetPanel() {
             {overBudget ? ' — over budget' : ''}
           </div>
         </>
+      )}
+      {projection && (
+        <div className={projectedOverBudget ? 'budget-projection budget-projection--over' : 'budget-projection'}>
+          At this rate, projected {formatUsd(projection.projectedTotal)} by day {projection.daysInMonth}
+          {projectedOverBudget ? ' — on track to exceed budget' : ''}
+        </div>
       )}
     </div>
   )
