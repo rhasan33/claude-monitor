@@ -28,6 +28,7 @@ export const MODEL_PRICING_TABLE: PricingRow[] = [
   row('claude-opus-4-5', 15, 75),
   row('claude-sonnet-5', 3, 15),
   row('claude-sonnet-4-5', 3, 15),
+  row('claude-sonnet-4-6', 3, 15),
   row('claude-haiku-4-5', 1, 5),
   row('claude-fable-5', 15, 75)
 ]

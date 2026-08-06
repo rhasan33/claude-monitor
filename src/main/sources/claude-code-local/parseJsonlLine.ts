@@ -55,40 +55,49 @@ export function parseJsonlLine(line: string): UsageSourceEvent | null {
     return null
   }
 
-  if (!raw.uuid || !raw.sessionId || !raw.timestamp || !raw.cwd) return null
+  // Everything past this point assumes a shape that, in practice, drifts
+  // across Claude Code versions and line types (e.g. `content` is sometimes
+  // a plain string instead of a block array). Any single line's oddities
+  // must not abort the rest of the file, so the whole extraction is guarded.
+  try {
+    if (!raw.uuid || !raw.sessionId || !raw.timestamp || !raw.cwd) return null
 
-  const timestampMs = Date.parse(raw.timestamp)
-  if (Number.isNaN(timestampMs)) return null
+    const timestampMs = Date.parse(raw.timestamp)
+    if (Number.isNaN(timestampMs)) return null
 
-  const role = raw.type === 'user' || raw.type === 'assistant' ? raw.type : 'other'
+    const role = raw.type === 'user' || raw.type === 'assistant' ? raw.type : 'other'
 
-  const rawUsage = raw.message?.usage
-  const usage = rawUsage
-    ? {
-        inputTokens: rawUsage.input_tokens ?? 0,
-        outputTokens: rawUsage.output_tokens ?? 0,
-        cacheCreationInputTokens: rawUsage.cache_creation_input_tokens ?? 0,
-        cacheReadInputTokens: rawUsage.cache_read_input_tokens ?? 0,
-        cacheCreationEphemeral1hTokens: rawUsage.cache_creation?.ephemeral_1h_input_tokens ?? 0,
-        cacheCreationEphemeral5mTokens: rawUsage.cache_creation?.ephemeral_5m_input_tokens ?? 0,
-        webSearchRequests: rawUsage.server_tool_use?.web_search_requests ?? 0,
-        webFetchRequests: rawUsage.server_tool_use?.web_fetch_requests ?? 0
-      }
-    : undefined
+    const rawUsage = raw.message?.usage
+    const usage = rawUsage
+      ? {
+          inputTokens: rawUsage.input_tokens ?? 0,
+          outputTokens: rawUsage.output_tokens ?? 0,
+          cacheCreationInputTokens: rawUsage.cache_creation_input_tokens ?? 0,
+          cacheReadInputTokens: rawUsage.cache_read_input_tokens ?? 0,
+          cacheCreationEphemeral1hTokens: rawUsage.cache_creation?.ephemeral_1h_input_tokens ?? 0,
+          cacheCreationEphemeral5mTokens: rawUsage.cache_creation?.ephemeral_5m_input_tokens ?? 0,
+          webSearchRequests: rawUsage.server_tool_use?.web_search_requests ?? 0,
+          webFetchRequests: rawUsage.server_tool_use?.web_fetch_requests ?? 0
+        }
+      : undefined
 
-  const toolUseNames = (raw.message?.content ?? [])
-    .filter((block) => block.type === 'tool_use' && block.name)
-    .map((block) => block.name as string)
+    const content = raw.message?.content
+    const toolUseNames = (Array.isArray(content) ? content : [])
+      .filter((block) => block.type === 'tool_use' && block.name)
+      .map((block) => block.name as string)
 
-  return {
-    sourceId: SOURCE_ID,
-    eventUuid: raw.uuid,
-    sessionId: raw.sessionId,
-    projectPath: raw.cwd,
-    timestampMs,
-    role,
-    model: raw.message?.model,
-    usage,
-    toolUseNames
+    return {
+      sourceId: SOURCE_ID,
+      eventUuid: raw.uuid,
+      sessionId: raw.sessionId,
+      projectPath: raw.cwd,
+      timestampMs,
+      role,
+      model: raw.message?.model,
+      usage,
+      toolUseNames
+    }
+  } catch {
+    return null
   }
 }

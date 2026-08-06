@@ -59,6 +59,20 @@ test('returns null when required fields are missing', () => {
   assert.equal(parseJsonlLine(JSON.stringify({ uuid: 'evt-2' })), null)
 })
 
+test('handles message.content being a plain string instead of a block array', () => {
+  const line = JSON.stringify({
+    uuid: 'evt-4',
+    sessionId: 'sess-1',
+    cwd: '/Users/dev/project-a',
+    timestamp: '2026-08-01T10:00:02.000Z',
+    type: 'assistant',
+    message: { model: 'claude-sonnet-5', content: 'just a plain string, not blocks' }
+  })
+  const event = parseJsonlLine(line)
+  assert.ok(event)
+  assert.deepEqual(event?.toolUseNames, [])
+})
+
 test('parses a user line with no usage field', () => {
   const line = JSON.stringify({
     uuid: 'evt-3',

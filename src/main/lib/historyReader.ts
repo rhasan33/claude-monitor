@@ -8,7 +8,9 @@ interface RawHistoryLine {
   display?: string
   project?: string
   sessionId?: string
-  timestamp?: string
+  // Observed as epoch milliseconds in practice; tolerate an ISO string too
+  // in case that ever changes.
+  timestamp?: number | string
 }
 
 function parseHistoryLine(line: string): ActivityItem | null {
@@ -22,10 +24,13 @@ function parseHistoryLine(line: string): ActivityItem | null {
     return null
   }
 
-  if (!raw.timestamp || !raw.display) return null
+  if (raw.timestamp === undefined || !raw.display) return null
+
+  const timestamp = typeof raw.timestamp === 'number' ? new Date(raw.timestamp).toISOString() : raw.timestamp
+  if (!timestamp || Number.isNaN(Date.parse(timestamp))) return null
 
   return {
-    timestamp: raw.timestamp,
+    timestamp,
     display: raw.display,
     project: raw.project ?? '',
     sessionId: raw.sessionId ?? ''

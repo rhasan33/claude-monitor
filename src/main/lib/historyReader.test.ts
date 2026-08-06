@@ -40,6 +40,19 @@ test('skips malformed and incomplete lines without throwing', async () => {
   })
 })
 
+test('accepts epoch-millisecond timestamps, as seen in real history.jsonl files', async () => {
+  const lines = [
+    JSON.stringify({ display: 'older', project: '/a', sessionId: 's1', timestamp: 1_700_000_000_000 }),
+    JSON.stringify({ display: 'newer', project: '/a', sessionId: 's1', timestamp: 1_800_000_000_000 })
+  ].join('\n')
+  await withTempFile(lines, async (filePath) => {
+    const items = await readRecentActivity(10, filePath)
+    assert.equal(items.length, 2)
+    assert.equal(items[0].display, 'newer')
+    assert.equal(items[0].timestamp, new Date(1_800_000_000_000).toISOString())
+  })
+})
+
 test('returns an empty list when the file is missing', async () => {
   const items = await readRecentActivity(10, '/nonexistent/path/history.jsonl')
   assert.deepEqual(items, [])
