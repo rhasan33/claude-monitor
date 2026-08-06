@@ -7,6 +7,7 @@ import type {
   ExportOverviewRequest,
   ExportResult,
   OverviewParams,
+  PricingOverride,
   RefreshResult,
   UsageSourceEvent
 } from '../../shared/types'
@@ -14,6 +15,8 @@ import { claudeCodeLocalSource } from '../sources/claude-code-local'
 import { buildOverview, buildSessionSummaries } from '../lib/aggregator'
 import { overviewToCsv, overviewToJson } from '../lib/exportOverview'
 import { readBudget, writeBudget } from '../lib/budgetStore'
+import { applyPricingOverrides, MODEL_PRICING_TABLE, type PricingRow } from '../lib/pricing'
+import { readPricingOverrides, writePricingOverrides } from '../lib/pricingOverridesStore'
 import { readProfile } from '../lib/claudeJson'
 import { readRecentActivity } from '../lib/historyReader'
 
@@ -21,6 +24,22 @@ import { readRecentActivity } from '../lib/historyReader'
 // for the process lifetime. Re-parsing the source files is a manual
 // `refresh()` away, not a background job — see README for why.
 let cachedEvents: UsageSourceEvent[] = []
+
+// Loaded once at startup (see registerIpcHandlers), updated in memory on
+// every setPricingOverrides call so getOverview/getSessions/etc. don't need
+// to hit disk per call.
+let pricingOverrides: PricingOverride[] = []
+
+function currentPricingTable(): PricingRow[] {
+  return applyPricingOverrides(MODEL_PRICING_TABLE, pricingOverrides)
+}
+
+// Set once by index.ts so setPricingOverrides can push a live update without
+// a full re-scan (costs change, but the underlying events don't).
+let notifyDataChanged: () => void = () => {}
+export function setDataChangedNotifier(fn: () => void): void {
+  notifyDataChanged = fn
+}
 
 export async function refresh(): Promise<RefreshResult> {
   const startedAt = Date.now()
@@ -48,7 +67,7 @@ export async function refresh(): Promise<RefreshResult> {
 
 /** Snapshot of the last refresh, for callers outside the IPC layer (e.g. the tray). */
 export function getCurrentOverview(): AggregatedOverview {
-  return buildOverview(cachedEvents)
+  return buildOverview(cachedEvents, undefined, currentPricingTable())
 }
 
 async function exportOverview(request: ExportOverviewRequest): Promise<ExportResult> {
@@ -63,21 +82,23 @@ async function exportOverview(request: ExportOverviewRequest): Promise<ExportRes
     : await dialog.showSaveDialog(dialogOptions)
   if (canceled || !filePath) return { filePath: null }
 
-  const overview = buildOverview(cachedEvents, request.params)
+  const overview = buildOverview(cachedEvents, request.params, currentPricingTable())
   const content = request.format === 'csv' ? overviewToCsv(overview) : overviewToJson(overview)
   await writeFile(filePath, content, 'utf8')
 
   return { filePath }
 }
 
-export function registerIpcHandlers(): void {
+export async function registerIpcHandlers(): Promise<void> {
+  pricingOverrides = await readPricingOverrides()
+
   ipcMain.handle(IPC_CHANNELS.refresh, () => refresh())
 
   ipcMain.handle(IPC_CHANNELS.getOverview, (_event, params?: OverviewParams) =>
-    buildOverview(cachedEvents, params)
+    buildOverview(cachedEvents, params, currentPricingTable())
   )
 
-  ipcMain.handle(IPC_CHANNELS.getProjects, () => buildOverview(cachedEvents).byProject)
+  ipcMain.handle(IPC_CHANNELS.getProjects, () => buildOverview(cachedEvents, undefined, currentPricingTable()).byProject)
 
   ipcMain.handle(IPC_CHANNELS.getRecentActivity, (_event, limit?: number) =>
     readRecentActivity(limit ?? 50)
@@ -94,6 +115,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.setBudget, (_event, budget: BudgetSettings) => writeBudget(budget))
 
   ipcMain.handle(IPC_CHANNELS.getSessions, (_event, projectPath: string) =>
-    buildSessionSummaries(cachedEvents, projectPath)
+    buildSessionSummaries(cachedEvents, projectPath, currentPricingTable())
   )
+
+  ipcMain.handle(IPC_CHANNELS.getPricingOverrides, () => pricingOverrides)
+
+  ipcMain.handle(IPC_CHANNELS.setPricingOverrides, async (_event, overrides: PricingOverride[]) => {
+    await writePricingOverrides(overrides)
+    pricingOverrides = overrides
+    notifyDataChanged()
+  })
 }

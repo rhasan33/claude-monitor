@@ -1,4 +1,4 @@
-import type { TokenUsage } from '../../shared/types'
+import type { PricingOverride, TokenUsage } from '../../shared/types'
 
 export interface PricingRow {
   modelId: string
@@ -33,6 +33,15 @@ export const MODEL_PRICING_TABLE: PricingRow[] = [
   row('claude-fable-5', 15, 75)
 ]
 
+/** Anthropic's documented standard cache multipliers, relative to the input rate. */
+function deriveCacheRates(inputPerMtok: number): Pick<PricingRow, 'cacheWrite5mPerMtok' | 'cacheWrite1hPerMtok' | 'cacheReadPerMtok'> {
+  return {
+    cacheWrite5mPerMtok: inputPerMtok * 1.25,
+    cacheWrite1hPerMtok: inputPerMtok * 2,
+    cacheReadPerMtok: inputPerMtok * 0.1
+  }
+}
+
 function row(modelId: string, inputPerMtok: number, outputPerMtok: number): PricingRow {
   return {
     modelId,
@@ -40,10 +49,24 @@ function row(modelId: string, inputPerMtok: number, outputPerMtok: number): Pric
     effectiveTo: null,
     inputPerMtok,
     outputPerMtok,
-    cacheWrite5mPerMtok: inputPerMtok * 1.25,
-    cacheWrite1hPerMtok: inputPerMtok * 2,
-    cacheReadPerMtok: inputPerMtok * 0.1
+    ...deriveCacheRates(inputPerMtok)
   }
+}
+
+/**
+ * Applies user-supplied rate overrides on top of the built-in table, for
+ * models the built-in table doesn't have yet or has wrong. An override
+ * replaces every row for that modelId with a single always-effective row —
+ * overrides aren't trying to model historical rate changes, just "use this
+ * rate instead." Cache rates are re-derived from the same standard
+ * multipliers as the built-in table.
+ */
+export function applyPricingOverrides(table: PricingRow[], overrides: PricingOverride[]): PricingRow[] {
+  if (overrides.length === 0) return table
+  const overriddenIds = new Set(overrides.map((o) => o.modelId))
+  const kept = table.filter((r) => !overriddenIds.has(r.modelId))
+  const replaced = overrides.map((o) => row(o.modelId, o.inputPerMtok, o.outputPerMtok))
+  return [...kept, ...replaced]
 }
 
 function findPricingRow(

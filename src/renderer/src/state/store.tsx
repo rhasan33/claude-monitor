@@ -12,6 +12,7 @@ import type {
   AggregatedOverview,
   BudgetSettings,
   OverviewParams,
+  PricingOverride,
   Profile,
   ProjectSummary,
   RefreshResult
@@ -23,6 +24,7 @@ interface AppState {
   activity: ActivityItem[]
   profile: Profile | null
   budget: BudgetSettings
+  pricingOverrides: PricingOverride[]
   filters: OverviewParams
   loading: boolean
   filtering: boolean
@@ -40,11 +42,13 @@ type Action =
       activity: ActivityItem[]
       profile: Profile
       budget: BudgetSettings
+      pricingOverrides: PricingOverride[]
     }
   | { type: 'REFRESH_RESULT'; result: RefreshResult }
   | { type: 'FILTER_START' }
   | { type: 'FILTERED_OVERVIEW_LOADED'; overview: AggregatedOverview; filters: OverviewParams }
   | { type: 'BUDGET_UPDATED'; budget: BudgetSettings }
+  | { type: 'PRICING_OVERRIDES_UPDATED'; pricingOverrides: PricingOverride[] }
 
 const initialState: AppState = {
   overview: null,
@@ -52,6 +56,7 @@ const initialState: AppState = {
   activity: [],
   profile: null,
   budget: { monthlyLimitUsd: null },
+  pricingOverrides: [],
   filters: {},
   loading: true,
   filtering: false,
@@ -74,7 +79,8 @@ function reducer(state: AppState, action: Action): AppState {
         projects: action.projects,
         activity: action.activity,
         profile: action.profile,
-        budget: action.budget
+        budget: action.budget,
+        pricingOverrides: action.pricingOverrides
       }
     case 'REFRESH_RESULT':
       return { ...state, lastRefresh: action.result }
@@ -84,6 +90,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, filtering: false, overview: action.overview, filters: action.filters }
     case 'BUDGET_UPDATED':
       return { ...state, budget: action.budget }
+    case 'PRICING_OVERRIDES_UPDATED':
+      return { ...state, pricingOverrides: action.pricingOverrides }
     default:
       return state
   }
@@ -94,6 +102,7 @@ interface AppContextValue {
   refresh: () => Promise<void>
   setFilters: (filters: OverviewParams) => Promise<void>
   setBudget: (budget: BudgetSettings) => Promise<void>
+  setPricingOverrides: (overrides: PricingOverride[]) => Promise<void>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -108,14 +117,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadViews = useCallback(async (filters: OverviewParams) => {
     dispatch({ type: 'LOAD_START' })
     try {
-      const [overview, projects, activity, profile, budget] = await Promise.all([
+      const [overview, projects, activity, profile, budget, pricingOverrides] = await Promise.all([
         window.api.getOverview(filters),
         window.api.getProjects(),
         window.api.getRecentActivity(50),
         window.api.getProfile(),
-        window.api.getBudget()
+        window.api.getBudget(),
+        window.api.getPricingOverrides()
       ])
-      dispatch({ type: 'DATA_LOADED', overview, projects, activity, profile, budget })
+      dispatch({ type: 'DATA_LOADED', overview, projects, activity, profile, budget, pricingOverrides })
     } catch (error) {
       dispatch({ type: 'LOAD_ERROR', message: error instanceof Error ? error.message : String(error) })
     }
@@ -152,6 +162,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'BUDGET_UPDATED', budget })
   }, [])
 
+  const setPricingOverrides = useCallback(
+    async (overrides: PricingOverride[]) => {
+      await window.api.setPricingOverrides(overrides)
+      dispatch({ type: 'PRICING_OVERRIDES_UPDATED', pricingOverrides: overrides })
+      // Costs across the whole overview changed; re-fetch views (main
+      // already has the new table cached, no re-scan needed).
+      await loadViews(state.filters)
+    },
+    [loadViews, state.filters]
+  )
+
   useEffect(() => {
     loadAll({})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,8 +186,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.filters])
 
   const value = useMemo(
-    () => ({ state, refresh, setFilters, setBudget }),
-    [state, refresh, setFilters, setBudget]
+    () => ({ state, refresh, setFilters, setBudget, setPricingOverrides }),
+    [state, refresh, setFilters, setBudget, setPricingOverrides]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

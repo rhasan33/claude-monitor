@@ -10,7 +10,8 @@ import type {
   ExportOverviewRequest,
   ExportResult,
   BudgetSettings,
-  SessionSummary
+  SessionSummary,
+  PricingOverride
 } from '../shared/types'
 
 const api = {
@@ -27,6 +28,9 @@ const api = {
   setBudget: (budget: BudgetSettings): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.setBudget, budget),
   getSessions: (projectPath: string): Promise<SessionSummary[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.getSessions, projectPath),
+  getPricingOverrides: (): Promise<PricingOverride[]> => ipcRenderer.invoke(IPC_CHANNELS.getPricingOverrides),
+  setPricingOverrides: (overrides: PricingOverride[]): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.setPricingOverrides, overrides),
   onDataChanged: (callback: () => void): (() => void) => {
     const listener = (): void => callback()
     ipcRenderer.on(IPC_CHANNELS.dataChanged, listener)

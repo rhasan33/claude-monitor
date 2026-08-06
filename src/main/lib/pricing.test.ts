@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { calculateCost, estimateCacheSavingsUsd, type PricingRow } from './pricing'
+import { applyPricingOverrides, calculateCost, estimateCacheSavingsUsd, type PricingRow } from './pricing'
 
 const testTable: PricingRow[] = [
   {
@@ -125,4 +125,56 @@ test('estimates cache savings as input-rate minus cache-read-rate', () => {
 test('cache savings is zero for unknown model or zero tokens', () => {
   assert.equal(estimateCacheSavingsUsd(1_000_000, 'unknown', ts, testTable), 0)
   assert.equal(estimateCacheSavingsUsd(0, 'test-model', ts, testTable), 0)
+})
+
+test('applyPricingOverrides replaces the built-in row(s) for an overridden model entirely', () => {
+  const overridden = applyPricingOverrides(testTable, [
+    { modelId: 'test-model', inputPerMtok: 100, outputPerMtok: 200 }
+  ])
+  const { costUsd } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model',
+    ts,
+    overridden
+  )
+  assert.equal(costUsd, 100)
+  // cache rates re-derived from the new input rate via the standard multipliers
+  assert.equal(overridden.find((r) => r.modelId === 'test-model')?.cacheReadPerMtok, 10)
+})
+
+test('applyPricingOverrides adds a new row for a model the built-in table has never heard of', () => {
+  const overridden = applyPricingOverrides(testTable, [
+    { modelId: 'brand-new-model', inputPerMtok: 5, outputPerMtok: 25 }
+  ])
+  assert.equal(overridden.length, 2)
+  const { costUsd, matched } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'brand-new-model',
+    ts,
+    overridden
+  )
+  assert.equal(matched, true)
+  assert.equal(costUsd, 5)
+})
+
+test('applyPricingOverrides is a no-op passthrough when there are no overrides', () => {
+  assert.equal(applyPricingOverrides(testTable, []), testTable)
 })

@@ -17,6 +17,7 @@ import { ToolUsageChart } from './components/ToolUsageChart'
 import { RefreshButton } from './components/RefreshButton'
 import { ExportButton } from './components/ExportButton'
 import { BudgetPanel } from './components/BudgetPanel'
+import { PricingSettings } from './components/PricingSettings'
 import { EmptyState } from './components/EmptyState'
 import { WarningBanner } from './components/WarningBanner'
 
@@ -51,6 +52,7 @@ export default function App() {
             daily={state.overview.daily}
           />
           <BudgetPanel />
+          <PricingSettings />
           <div className="grid grid-2">
             <TokenUsageChart daily={state.overview.daily} />
             <ActivityTimeline daily={state.overview.daily} />

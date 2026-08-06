@@ -157,6 +157,12 @@ export interface BudgetSettings {
   monthlyLimitUsd: number | null
 }
 
+export interface PricingOverride {
+  modelId: string
+  inputPerMtok: number
+  outputPerMtok: number
+}
+
 export type ExportFormat = 'csv' | 'json'
 
 export interface ExportOverviewRequest {
@@ -179,6 +185,8 @@ export const IPC_CHANNELS = {
   getBudget: 'usage:getBudget',
   setBudget: 'usage:setBudget',
   getSessions: 'usage:getSessions',
+  getPricingOverrides: 'usage:getPricingOverrides',
+  setPricingOverrides: 'usage:setPricingOverrides',
   /** Push-only: main -> renderer, sent after an auto-refresh. No ipcMain.handle for this one. */
   dataChanged: 'usage:dataChanged'
 } as const

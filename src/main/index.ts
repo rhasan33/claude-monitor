@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { IPC_CHANNELS } from '../shared/types'
-import { registerIpcHandlers, refresh, getCurrentOverview } from './ipc/handlers'
+import { registerIpcHandlers, refresh, getCurrentOverview, setDataChangedNotifier } from './ipc/handlers'
 import { watchProjectsDir } from './lib/watcher'
 import { createTray } from './lib/tray'
 
@@ -47,13 +47,18 @@ function showOrCreateWindow(): void {
   }
 }
 
-async function refreshAndNotify(): Promise<void> {
-  await refresh()
+function notifyAllWindows(): void {
   for (const w of BrowserWindow.getAllWindows()) w.webContents.send(IPC_CHANNELS.dataChanged)
 }
 
-app.whenReady().then(() => {
-  registerIpcHandlers()
+async function refreshAndNotify(): Promise<void> {
+  await refresh()
+  notifyAllWindows()
+}
+
+app.whenReady().then(async () => {
+  await registerIpcHandlers()
+  setDataChangedNotifier(notifyAllWindows)
   createWindow()
 
   createTray({

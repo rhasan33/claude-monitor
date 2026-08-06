@@ -171,6 +171,30 @@ table {
   color: var(--text-muted);
 }
 
+.pricing-hint {
+  font-size: 12px;
+  margin: 0 0 12px;
+}
+
+.pricing-hint code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+}
+
+.pricing-save {
+  margin-top: 12px;
+}
+
+table input[type='number'] {
+  width: 90px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

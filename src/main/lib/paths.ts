@@ -12,5 +12,6 @@ export const paths = {
   claudeJson: join(homedir(), '.claude.json'),
   historyJsonl: join(claudeDir, 'history.jsonl'),
   configDir,
-  budgetJson: join(configDir, 'budget.json')
+  budgetJson: join(configDir, 'budget.json'),
+  pricingOverridesJson: join(configDir, 'pricing-overrides.json')
 }

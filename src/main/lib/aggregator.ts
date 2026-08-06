@@ -11,7 +11,7 @@ import type {
   ToolUsageCount,
   UsageSourceEvent
 } from '../../shared/types'
-import { calculateCost, estimateCacheSavingsUsd } from './pricing'
+import { calculateCost, estimateCacheSavingsUsd, MODEL_PRICING_TABLE, type PricingRow } from './pricing'
 
 function localDateKey(timestampMs: number): string {
   const d = new Date(timestampMs)
@@ -76,7 +76,11 @@ function addUsage(acc: Accumulator, event: UsageSourceEvent, costUsd: number): v
  * per query is simpler and fast enough; see README for the v2 path if that
  * ever stops being true.
  */
-export function buildOverview(events: UsageSourceEvent[], params?: OverviewParams): AggregatedOverview {
+export function buildOverview(
+  events: UsageSourceEvent[],
+  params?: OverviewParams,
+  pricingTable: PricingRow[] = MODEL_PRICING_TABLE
+): AggregatedOverview {
   const warnings: string[] = []
   const unmatchedModels = new Set<string>()
 
@@ -124,7 +128,7 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
 
     if (!event.usage) continue
 
-    const { costUsd, matched } = calculateCost(event.usage, event.model, event.timestampMs)
+    const { costUsd, matched } = calculateCost(event.usage, event.model, event.timestampMs, pricingTable)
     if (!matched && event.model) unmatchedModels.add(event.model)
 
     addUsage(totals, event, costUsd)
@@ -146,7 +150,8 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
     cacheSavingsUsd += estimateCacheSavingsUsd(
       event.usage.cacheReadInputTokens,
       event.model,
-      event.timestampMs
+      event.timestampMs,
+      pricingTable
     )
   }
 
@@ -240,7 +245,11 @@ export function buildOverview(events: UsageSourceEvent[], params?: OverviewParam
 }
 
 /** Groups one project's events by session — the drill-down behind `ProjectSummary`. */
-export function buildSessionSummaries(events: UsageSourceEvent[], projectPath: string): SessionSummary[] {
+export function buildSessionSummaries(
+  events: UsageSourceEvent[],
+  projectPath: string,
+  pricingTable: PricingRow[] = MODEL_PRICING_TABLE
+): SessionSummary[] {
   const sessions = new Map<
     string,
     Accumulator & { toolUsage: Map<string, number>; models: Set<string>; firstMs: number; lastMs: number }
@@ -264,7 +273,7 @@ export function buildSessionSummaries(events: UsageSourceEvent[], projectPath: s
     }
 
     if (event.usage) {
-      const { costUsd } = calculateCost(event.usage, event.model, event.timestampMs)
+      const { costUsd } = calculateCost(event.usage, event.model, event.timestampMs, pricingTable)
       addUsage(session, event, costUsd)
     }
 
