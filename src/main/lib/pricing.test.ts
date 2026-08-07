@@ -117,6 +117,68 @@ test('respects effectiveTo date boundaries', () => {
   assert.equal(after.costUsd, 99)
 })
 
+test('matches a dated snapshot id against its undated alias row', () => {
+  const { costUsd, matched } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-20251001',
+    ts,
+    testTable
+  )
+  assert.equal(matched, true)
+  assert.equal(costUsd, 10)
+})
+
+test('prefers an exact snapshot row over the undated alias row', () => {
+  const withSnapshot: PricingRow[] = [
+    ...testTable,
+    { ...testTable[0], modelId: 'test-model-20251001', inputPerMtok: 77 }
+  ]
+  const { costUsd } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-20251001',
+    ts,
+    withSnapshot
+  )
+  assert.equal(costUsd, 77)
+})
+
+test('does not strip a suffix that is not an 8-digit date', () => {
+  const { matched } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-fast',
+    ts,
+    testTable
+  )
+  assert.equal(matched, false)
+})
+
 test('estimates cache savings as input-rate minus cache-read-rate', () => {
   const saved = estimateCacheSavingsUsd(1_000_000, 'test-model', ts, testTable)
   assert.equal(saved, 9) // (10 - 1) per Mtok

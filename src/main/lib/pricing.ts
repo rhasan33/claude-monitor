@@ -69,15 +69,33 @@ export function applyPricingOverrides(table: PricingRow[], overrides: PricingOve
   return [...kept, ...replaced]
 }
 
+/**
+ * Logs carry either a bare model alias (`claude-opus-4-8`) or a pinned snapshot
+ * with a date suffix (`claude-haiku-4-5-20251001`) — the same model and the
+ * same rates either way. Strip a trailing 8-digit date so one table row covers
+ * both spellings; anything else is left alone.
+ */
+function stripDateSuffix(modelId: string): string {
+  return modelId.replace(/-\d{8}$/, '')
+}
+
 function findPricingRow(
   table: PricingRow[],
   modelId: string,
   timestampMs: number
 ): PricingRow | undefined {
   const iso = new Date(timestampMs).toISOString()
-  return table.find(
-    (r) => r.modelId === modelId && iso >= r.effectiveFrom && (r.effectiveTo === null || iso < r.effectiveTo)
-  )
+  const inEffect = (r: PricingRow): boolean =>
+    iso >= r.effectiveFrom && (r.effectiveTo === null || iso < r.effectiveTo)
+
+  // Exact match wins, so a table entry for a specific snapshot still beats the
+  // alias row it would otherwise fall back to.
+  const exact = table.find((r) => r.modelId === modelId && inEffect(r))
+  if (exact) return exact
+
+  const undated = stripDateSuffix(modelId)
+  if (undated === modelId) return undefined
+  return table.find((r) => r.modelId === undated && inEffect(r))
 }
 
 export interface CostResult {
