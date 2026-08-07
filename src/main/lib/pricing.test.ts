@@ -1,6 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { applyPricingOverrides, calculateCost, estimateCacheSavingsUsd, type PricingRow } from './pricing'
+import {
+  applyPricingOverrides,
+  calculateCost,
+  estimateCacheSavingsUsd,
+  MODEL_PRICING_TABLE,
+  type PricingRow
+} from './pricing'
 
 const testTable: PricingRow[] = [
   {
@@ -187,6 +193,33 @@ test('estimates cache savings as input-rate minus cache-read-rate', () => {
 test('cache savings is zero for unknown model or zero tokens', () => {
   assert.equal(estimateCacheSavingsUsd(1_000_000, 'unknown', ts, testTable), 0)
   assert.equal(estimateCacheSavingsUsd(0, 'test-model', ts, testTable), 0)
+})
+
+// Guards the built-in rates against silent drift. Values verified against
+// Anthropic's published pricing on 2026-08-07; update deliberately, together
+// with the table.
+test('built-in table carries the published rate for every current model', () => {
+  const expected: Record<string, [number, number]> = {
+    'claude-fable-5': [10, 50],
+    'claude-mythos-5': [10, 50],
+    'claude-opus-5': [5, 25],
+    'claude-opus-4-8': [5, 25],
+    'claude-opus-4-7': [5, 25],
+    'claude-opus-4-6': [5, 25],
+    'claude-opus-4-5': [5, 25],
+    'claude-sonnet-4-6': [3, 15],
+    'claude-sonnet-4-5': [3, 15],
+    'claude-haiku-4-5': [1, 5]
+    // claude-sonnet-5 is covered separately — it has two rows while its
+    // introductory rate is in effect.
+  }
+
+  for (const [modelId, [input, output]] of Object.entries(expected)) {
+    const rows = MODEL_PRICING_TABLE.filter((r) => r.modelId === modelId)
+    assert.equal(rows.length, 1, `expected exactly one row for ${modelId}`)
+    assert.equal(rows[0].inputPerMtok, input, `${modelId} input rate`)
+    assert.equal(rows[0].outputPerMtok, output, `${modelId} output rate`)
+  }
 })
 
 test('applyPricingOverrides replaces the built-in row(s) for an overridden model entirely', () => {

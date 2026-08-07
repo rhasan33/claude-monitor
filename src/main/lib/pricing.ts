@@ -15,22 +15,29 @@ export interface PricingRow {
  * VERIFY BEFORE TRUSTING COST NUMBERS: Claude Code's logs don't record a
  * cost field, so every dollar figure in this app is derived from this table.
  * The cache-write/read multipliers below (1.25x / 2x / 0.1x of the input
- * rate) are Anthropic's documented standard, but the base $/Mtok rates are a
- * best-effort seed — check https://www.anthropic.com/pricing and correct
- * this file (it's the only place cost numbers come from) before relying on
- * totals for anything beyond a rough estimate.
+ * rate) are Anthropic's documented standard. The base $/Mtok rates were last
+ * checked against Anthropic's published pricing on 2026-08-07 — re-check
+ * https://www.anthropic.com/pricing and correct this file (it's the only
+ * place cost numbers come from) when rates move or a new model ships.
+ *
+ * A model missing from this table costs $0 and raises a warning banner, so
+ * adding new models here matters as much as keeping the rates current.
  *
  * Rows are matched by exact modelId + effective date range, so a rate
  * change over time is a new row, not an edit to history.
  */
 export const MODEL_PRICING_TABLE: PricingRow[] = [
-  row('claude-opus-5', 15, 75),
-  row('claude-opus-4-5', 15, 75),
+  row('claude-fable-5', 10, 50),
+  row('claude-mythos-5', 10, 50),
+  row('claude-opus-5', 5, 25),
+  row('claude-opus-4-8', 5, 25),
+  row('claude-opus-4-7', 5, 25),
+  row('claude-opus-4-6', 5, 25),
+  row('claude-opus-4-5', 5, 25),
   row('claude-sonnet-5', 3, 15),
-  row('claude-sonnet-4-5', 3, 15),
   row('claude-sonnet-4-6', 3, 15),
-  row('claude-haiku-4-5', 1, 5),
-  row('claude-fable-5', 15, 75)
+  row('claude-sonnet-4-5', 3, 15),
+  row('claude-haiku-4-5', 1, 5)
 ]
 
 /** Anthropic's documented standard cache multipliers, relative to the input rate. */
