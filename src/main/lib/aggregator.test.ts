@@ -94,10 +94,23 @@ test('computes cache efficiency and warns on unmatched models without dropping o
   assert.equal(overview.cacheEfficiency.cacheReadTokens, 1_000_000)
   assert.equal(overview.cacheEfficiency.cacheCreationTokens, 1_000_000)
   assert.equal(overview.cacheEfficiency.readToCreationRatio, 1)
-  // sonnet-5: (3 - 0.3) per Mtok saved on 1Mtok of cache reads = $2.70
+  // sonnet-4-6: (3 - 0.3) per Mtok saved on 1Mtok of cache reads = $2.70
   assert.equal(overview.cacheEfficiency.estimatedSavingsUsd, 2.7)
   assert.equal(overview.totals.messageCount, 2)
   assert.ok(overview.warnings.some((w) => w.includes('totally-unknown-model')))
+})
+
+test('does not warn about <synthetic>, which is never billable', () => {
+  const overview = buildOverview([
+    makeEvent({ model: '<synthetic>' }),
+    makeEvent({ model: 'totally-unknown-model' })
+  ])
+  // Still counted and still $0 — just not reported as a missing rate.
+  assert.equal(overview.totals.messageCount, 2)
+  assert.ok(overview.byModel.some((m) => m.model === '<synthetic>' && m.costUsd === 0))
+  assert.equal(overview.warnings.length, 1)
+  assert.ok(overview.warnings[0].includes('totally-unknown-model'))
+  assert.ok(!overview.warnings[0].includes('<synthetic>'))
 })
 
 test('counts tool usage across events', () => {

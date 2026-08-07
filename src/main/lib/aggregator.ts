@@ -13,6 +13,14 @@ import type {
 } from '../../shared/types'
 import { calculateCost, estimateCacheSavingsUsd, MODEL_PRICING_TABLE, type PricingRow } from './pricing'
 
+/**
+ * Model names Claude Code writes for messages it generates locally rather than
+ * billing to a real model. $0 is the correct cost for these, so they're kept
+ * out of the unpriced-model warning — a banner that fires every session for
+ * something that can never have a rate just teaches people to ignore it.
+ */
+const NON_BILLABLE_MODELS = new Set(['<synthetic>'])
+
 function localDateKey(timestampMs: number): string {
   const d = new Date(timestampMs)
   const year = d.getFullYear()
@@ -129,7 +137,9 @@ export function buildOverview(
     if (!event.usage) continue
 
     const { costUsd, matched } = calculateCost(event.usage, event.model, event.timestampMs, pricingTable)
-    if (!matched && event.model) unmatchedModels.add(event.model)
+    if (!matched && event.model && !NON_BILLABLE_MODELS.has(event.model)) {
+      unmatchedModels.add(event.model)
+    }
 
     addUsage(totals, event, costUsd)
     addUsage(project, event, costUsd)
