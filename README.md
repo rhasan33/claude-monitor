@@ -58,7 +58,12 @@ make install-app # copy the .app to /Applications, so it's launchable from Spotl
 make dmg         # build the .dmg installer and reveal it in Finder
 ```
 
-The packaged app is unsigned (no paid Apple Developer certificate) but ad-hoc signed, which is enough to launch normally on this machine via double-click. If you ever move the `.app` or the `.dmg` to another Mac through a channel that applies macOS's quarantine flag (a download link, AirDrop, email, etc.), that Mac will show a one-time "unidentified developer" prompt — right-click → Open resolves it.
+The packaged app is unsigned (no paid Apple Developer certificate) but ad-hoc signed, which is enough to launch normally on this machine via double-click. If you move the `.app` or `.dmg` to another Mac through a channel that applies macOS's quarantine flag (a download link, AirDrop, email, etc.), Gatekeeper will block the first launch — often with the stronger "Apple could not verify \[...\] is free of malware" dialog rather than a simple one-time prompt. To resolve it on that Mac:
+
+- Right-click (or Control-click) the app → **Open** → confirm in the dialog. If that doesn't offer a bypass, open **System Settings → Privacy & Security**, scroll to the security section, and click **Open Anyway** next to the blocked-app notice, then try opening it again.
+- Or, from Terminal: `xattr -cr "/Applications/Claude Monitor.app"` (strips the quarantine flag directly; works even when the dialog offers no bypass).
+
+This is a Gatekeeper/notarization limitation, not a bug in the app — actually removing the warning requires notarizing with a paid Apple Developer ID certificate, which this project doesn't currently have.
 
 ## How it works
 
