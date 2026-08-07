@@ -38,7 +38,16 @@ async function listJsonlFiles(dir: string): Promise<string[]> {
   return files
 }
 
-export const claudeCodeLocalSource: UsageSource = {
+/**
+ * Widens `discover()` with an optional root so tests can point at a fixture
+ * tree. It stays assignable to the zero-argument `UsageSource.discover`, which
+ * keeps a filesystem path out of the source-agnostic interface.
+ */
+interface ClaudeCodeLocalSource extends UsageSource {
+  discover(projectsDir?: string): Promise<SourceTarget[]>
+}
+
+export const claudeCodeLocalSource: ClaudeCodeLocalSource = {
   id: 'claude_code_local',
   displayName: 'Claude Code (local logs)',
 
