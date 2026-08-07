@@ -1,6 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { applyPricingOverrides, calculateCost, estimateCacheSavingsUsd, type PricingRow } from './pricing'
+import {
+  applyPricingOverrides,
+  calculateCost,
+  estimateCacheSavingsUsd,
+  MODEL_PRICING_TABLE,
+  type PricingRow
+} from './pricing'
 
 const testTable: PricingRow[] = [
   {
@@ -117,6 +123,68 @@ test('respects effectiveTo date boundaries', () => {
   assert.equal(after.costUsd, 99)
 })
 
+test('matches a dated snapshot id against its undated alias row', () => {
+  const { costUsd, matched } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-20251001',
+    ts,
+    testTable
+  )
+  assert.equal(matched, true)
+  assert.equal(costUsd, 10)
+})
+
+test('prefers an exact snapshot row over the undated alias row', () => {
+  const withSnapshot: PricingRow[] = [
+    ...testTable,
+    { ...testTable[0], modelId: 'test-model-20251001', inputPerMtok: 77 }
+  ]
+  const { costUsd } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-20251001',
+    ts,
+    withSnapshot
+  )
+  assert.equal(costUsd, 77)
+})
+
+test('does not strip a suffix that is not an 8-digit date', () => {
+  const { matched } = calculateCost(
+    {
+      inputTokens: 1_000_000,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationEphemeral1hTokens: 0,
+      cacheCreationEphemeral5mTokens: 0,
+      webSearchRequests: 0,
+      webFetchRequests: 0
+    },
+    'test-model-fast',
+    ts,
+    testTable
+  )
+  assert.equal(matched, false)
+})
+
 test('estimates cache savings as input-rate minus cache-read-rate', () => {
   const saved = estimateCacheSavingsUsd(1_000_000, 'test-model', ts, testTable)
   assert.equal(saved, 9) // (10 - 1) per Mtok
@@ -125,6 +193,54 @@ test('estimates cache savings as input-rate minus cache-read-rate', () => {
 test('cache savings is zero for unknown model or zero tokens', () => {
   assert.equal(estimateCacheSavingsUsd(1_000_000, 'unknown', ts, testTable), 0)
   assert.equal(estimateCacheSavingsUsd(0, 'test-model', ts, testTable), 0)
+})
+
+// Guards the built-in rates against silent drift. Values verified against
+// Anthropic's published pricing on 2026-08-07; update deliberately, together
+// with the table.
+test('built-in table carries the published rate for every current model', () => {
+  const expected: Record<string, [number, number]> = {
+    'claude-fable-5': [10, 50],
+    'claude-mythos-5': [10, 50],
+    'claude-opus-5': [5, 25],
+    'claude-opus-4-8': [5, 25],
+    'claude-opus-4-7': [5, 25],
+    'claude-opus-4-6': [5, 25],
+    'claude-opus-4-5': [5, 25],
+    'claude-sonnet-4-6': [3, 15],
+    'claude-sonnet-4-5': [3, 15],
+    'claude-haiku-4-5': [1, 5]
+    // claude-sonnet-5 is covered separately — it has two rows while its
+    // introductory rate is in effect.
+  }
+
+  for (const [modelId, [input, output]] of Object.entries(expected)) {
+    const rows = MODEL_PRICING_TABLE.filter((r) => r.modelId === modelId)
+    assert.equal(rows.length, 1, `expected exactly one row for ${modelId}`)
+    assert.equal(rows[0].inputPerMtok, input, `${modelId} input rate`)
+    assert.equal(rows[0].outputPerMtok, output, `${modelId} output rate`)
+  }
+})
+
+test('prices Sonnet 5 at its introductory rate until the promo lapses', () => {
+  const oneMtokIn = {
+    inputTokens: 1_000_000,
+    outputTokens: 0,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
+    cacheCreationEphemeral1hTokens: 0,
+    cacheCreationEphemeral5mTokens: 0,
+    webSearchRequests: 0,
+    webFetchRequests: 0
+  }
+
+  const during = calculateCost(oneMtokIn, 'claude-sonnet-5', Date.parse('2026-08-31T23:59:59.000Z'))
+  assert.equal(during.matched, true)
+  assert.equal(during.costUsd, 2)
+
+  const after = calculateCost(oneMtokIn, 'claude-sonnet-5', Date.parse('2026-09-01T00:00:00.000Z'))
+  assert.equal(after.matched, true)
+  assert.equal(after.costUsd, 3)
 })
 
 test('applyPricingOverrides replaces the built-in row(s) for an overridden model entirely', () => {

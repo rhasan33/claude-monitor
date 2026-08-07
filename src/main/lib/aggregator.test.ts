@@ -11,7 +11,7 @@ function makeEvent(overrides: Partial<UsageSourceEvent> = {}): UsageSourceEvent 
     projectPath: '/Users/dev/project-a',
     timestampMs: Date.parse('2026-08-01T10:00:00.000Z'),
     role: 'assistant',
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-4-6',
     usage: {
       inputTokens: 1_000_000,
       outputTokens: 0,
@@ -37,7 +37,7 @@ test('sums totals, distinct sessions, and distinct projects across events', () =
   assert.equal(overview.totals.sessionCount, 2)
   assert.equal(overview.totals.projectCount, 2)
   assert.equal(overview.totals.inputTokens, 3_000_000)
-  // claude-sonnet-5 input rate is $3/Mtok -> 3 events * 1Mtok each = $9
+  // claude-sonnet-4-6 input rate is $3/Mtok -> 3 events * 1Mtok each = $9
   assert.equal(overview.totals.costUsd, 9)
 })
 
@@ -77,7 +77,7 @@ test('filters by dateRange, projectFilter, and modelFilter', () => {
 test('computes cache efficiency and warns on unmatched models without dropping other events', () => {
   const overview = buildOverview([
     makeEvent({
-      model: 'claude-sonnet-5',
+      model: 'claude-sonnet-4-6',
       usage: {
         inputTokens: 0,
         outputTokens: 0,
@@ -94,10 +94,23 @@ test('computes cache efficiency and warns on unmatched models without dropping o
   assert.equal(overview.cacheEfficiency.cacheReadTokens, 1_000_000)
   assert.equal(overview.cacheEfficiency.cacheCreationTokens, 1_000_000)
   assert.equal(overview.cacheEfficiency.readToCreationRatio, 1)
-  // sonnet-5: (3 - 0.3) per Mtok saved on 1Mtok of cache reads = $2.70
+  // sonnet-4-6: (3 - 0.3) per Mtok saved on 1Mtok of cache reads = $2.70
   assert.equal(overview.cacheEfficiency.estimatedSavingsUsd, 2.7)
   assert.equal(overview.totals.messageCount, 2)
   assert.ok(overview.warnings.some((w) => w.includes('totally-unknown-model')))
+})
+
+test('does not warn about <synthetic>, which is never billable', () => {
+  const overview = buildOverview([
+    makeEvent({ model: '<synthetic>' }),
+    makeEvent({ model: 'totally-unknown-model' })
+  ])
+  // Still counted and still $0 — just not reported as a missing rate.
+  assert.equal(overview.totals.messageCount, 2)
+  assert.ok(overview.byModel.some((m) => m.model === '<synthetic>' && m.costUsd === 0))
+  assert.equal(overview.warnings.length, 1)
+  assert.ok(overview.warnings[0].includes('totally-unknown-model'))
+  assert.ok(!overview.warnings[0].includes('<synthetic>'))
 })
 
 test('counts tool usage across events', () => {
@@ -160,13 +173,13 @@ test('buildSessionSummaries tracks tool usage, models, and start/end bounds per 
   const t2 = Date.parse('2026-08-01T11:00:00.000Z')
   const sessions = buildSessionSummaries(
     [
-      makeEvent({ sessionId: 's1', projectPath: '/a', timestampMs: t1, model: 'claude-sonnet-5', toolUseNames: ['Bash'] }),
+      makeEvent({ sessionId: 's1', projectPath: '/a', timestampMs: t1, model: 'claude-sonnet-4-6', toolUseNames: ['Bash'] }),
       makeEvent({ sessionId: 's1', projectPath: '/a', timestampMs: t2, model: 'claude-opus-5', toolUseNames: ['Bash', 'Read'] })
     ],
     '/a'
   )
   assert.equal(sessions.length, 1)
-  assert.deepEqual(sessions[0].models.sort(), ['claude-opus-5', 'claude-sonnet-5'])
+  assert.deepEqual(sessions[0].models.sort(), ['claude-opus-5', 'claude-sonnet-4-6'])
   assert.deepEqual(sessions[0].toolUsage[0], { toolName: 'Bash', count: 2 })
   assert.deepEqual(sessions[0].toolUsage[1], { toolName: 'Read', count: 1 })
   assert.equal(sessions[0].startedAt, new Date(t1).toISOString())
