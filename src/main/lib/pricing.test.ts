@@ -222,6 +222,27 @@ test('built-in table carries the published rate for every current model', () => 
   }
 })
 
+test('prices Sonnet 5 at its introductory rate until the promo lapses', () => {
+  const oneMtokIn = {
+    inputTokens: 1_000_000,
+    outputTokens: 0,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
+    cacheCreationEphemeral1hTokens: 0,
+    cacheCreationEphemeral5mTokens: 0,
+    webSearchRequests: 0,
+    webFetchRequests: 0
+  }
+
+  const during = calculateCost(oneMtokIn, 'claude-sonnet-5', Date.parse('2026-08-31T23:59:59.000Z'))
+  assert.equal(during.matched, true)
+  assert.equal(during.costUsd, 2)
+
+  const after = calculateCost(oneMtokIn, 'claude-sonnet-5', Date.parse('2026-09-01T00:00:00.000Z'))
+  assert.equal(after.matched, true)
+  assert.equal(after.costUsd, 3)
+})
+
 test('applyPricingOverrides replaces the built-in row(s) for an overridden model entirely', () => {
   const overridden = applyPricingOverrides(testTable, [
     { modelId: 'test-model', inputPerMtok: 100, outputPerMtok: 200 }

@@ -34,7 +34,11 @@ export const MODEL_PRICING_TABLE: PricingRow[] = [
   row('claude-opus-4-7', 5, 25),
   row('claude-opus-4-6', 5, 25),
   row('claude-opus-4-5', 5, 25),
-  row('claude-sonnet-5', 3, 15),
+  // Sonnet 5 ran at an introductory $2/$10 through 2026-08-31, so messages from
+  // that window must keep costing the promotional rate after it lapses. The two
+  // ranges don't overlap, so row order here doesn't matter.
+  row('claude-sonnet-5', 2, 10, '2025-01-01', '2026-09-01'),
+  row('claude-sonnet-5', 3, 15, '2026-09-01'),
   row('claude-sonnet-4-6', 3, 15),
   row('claude-sonnet-4-5', 3, 15),
   row('claude-haiku-4-5', 1, 5)
@@ -49,11 +53,17 @@ function deriveCacheRates(inputPerMtok: number): Pick<PricingRow, 'cacheWrite5mP
   }
 }
 
-function row(modelId: string, inputPerMtok: number, outputPerMtok: number): PricingRow {
+function row(
+  modelId: string,
+  inputPerMtok: number,
+  outputPerMtok: number,
+  effectiveFrom = '2025-01-01',
+  effectiveTo: string | null = null
+): PricingRow {
   return {
     modelId,
-    effectiveFrom: '2025-01-01',
-    effectiveTo: null,
+    effectiveFrom,
+    effectiveTo,
     inputPerMtok,
     outputPerMtok,
     ...deriveCacheRates(inputPerMtok)
