@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useApp } from '../../state/store'
 import { ClaudeConfigProvider, useClaudeConfig } from '../../state/claudeConfigStore'
 import { SkillsList } from './SkillsList'
+import { McpServersPanel } from './McpServersPanel'
 
-type ConfigTab = 'skills'
+type ConfigTab = 'skills' | 'mcp'
 
 function ClaudeConfigInner() {
   const { state: appState } = useApp()
   const { state, setScope } = useClaudeConfig()
-  const [tab] = useState<ConfigTab>('skills')
+  const [tab, setTab] = useState<ConfigTab>('skills')
 
   const scopeValue = state.scope === 'global' ? 'global' : state.scope.project
 
@@ -32,10 +33,22 @@ function ClaudeConfigInner() {
       </div>
 
       <div className="claude-config-tabs">
-        <button className="claude-config-tab claude-config-tab-active">Skills</button>
+        <button
+          className={`claude-config-tab ${tab === 'skills' ? 'claude-config-tab-active' : ''}`}
+          onClick={() => setTab('skills')}
+        >
+          Skills
+        </button>
+        <button
+          className={`claude-config-tab ${tab === 'mcp' ? 'claude-config-tab-active' : ''}`}
+          onClick={() => setTab('mcp')}
+        >
+          MCP servers
+        </button>
       </div>
 
       {tab === 'skills' && <SkillsList />}
+      {tab === 'mcp' && <McpServersPanel />}
     </div>
   )
 }
