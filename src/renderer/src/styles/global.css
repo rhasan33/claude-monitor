@@ -624,3 +624,53 @@ th {
   color: var(--critical);
   border-color: var(--critical);
 }
+
+.config-form-mode-toggle {
+  margin-bottom: 16px;
+}
+
+.config-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-form-list-label {
+  font-size: 12px;
+}
+
+.config-form-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.config-form-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: var(--page);
+}
+
+.config-form-chip button {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.config-form-chip-input {
+  display: flex;
+  gap: 8px;
+}
+
+.config-form-chip-input input {
+  flex: 1;
+}

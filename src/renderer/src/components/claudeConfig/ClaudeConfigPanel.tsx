@@ -3,8 +3,9 @@ import { useApp } from '../../state/store'
 import { ClaudeConfigProvider, useClaudeConfig } from '../../state/claudeConfigStore'
 import { SkillsList } from './SkillsList'
 import { McpServersPanel } from './McpServersPanel'
+import { SettingsEditor } from './SettingsEditor'
 
-type ConfigTab = 'skills' | 'mcp'
+type ConfigTab = 'skills' | 'mcp' | 'settings'
 
 function ClaudeConfigInner() {
   const { state: appState } = useApp()
@@ -45,10 +46,17 @@ function ClaudeConfigInner() {
         >
           MCP servers
         </button>
+        <button
+          className={`claude-config-tab ${tab === 'settings' ? 'claude-config-tab-active' : ''}`}
+          onClick={() => setTab('settings')}
+        >
+          Settings
+        </button>
       </div>
 
       {tab === 'skills' && <SkillsList />}
       {tab === 'mcp' && <McpServersPanel />}
+      {tab === 'settings' && <SettingsEditor />}
     </div>
   )
 }
