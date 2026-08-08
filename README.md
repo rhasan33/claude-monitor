@@ -20,6 +20,7 @@ Under active development. Current state:
 - [x] Profile (`~/.claude.json`) and recent-activity (`history.jsonl`) readers
 - [x] IPC bridge between the main process and the renderer
 - [x] Dashboard UI (summary cards, token/cache/model/project charts, activity feed, filters)
+- [x] Claude Code Config manager (view/edit skills, MCP servers, and settings — global and per-project)
 - [x] Packaged build (macOS)
 
 ## Requirements
@@ -76,6 +77,16 @@ The app reads directly from Claude Code's local data directory — no network ca
 See `src/main/sources/types.ts` for the `UsageSource` interface — the data model is designed so a future source (e.g. the Anthropic Admin API, or your own instrumented API usage) can be added without reworking aggregation or the UI.
 
 Cost estimates are derived from a versioned pricing table (`src/main/lib/pricing.ts`) rather than a field in the logs (Claude Code doesn't record cost per message). Anthropic's published rates change over time, so double-check the table against Anthropic's current pricing page before trusting a cost number.
+
+### Claude Code Config manager
+
+The "Claude Code Config" tab is the one part of the app that writes, not just reads: it lets you view and edit Claude Code's own local config — skills, MCP servers, and settings/permissions — for both the global scope and any project the app has already seen usage from.
+
+- Skills: `~/.claude/skills/` and `<project>/.claude/skills/`
+- MCP servers: the `mcpServers` key in `~/.claude.json` and `<project>/.mcp.json`
+- Settings/permissions: `~/.claude/settings.json` and `<project>/.claude/settings.json`
+
+Writes go through an atomic temp-file-then-rename (`src/main/lib/atomicWrite.ts`) so a crash mid-write can't leave a config file corrupted, and destructive actions (deleting a skill, removing an MCP server) require confirmation. Still no network calls — everything happens on files already on your machine.
 
 ## Contributing
 
