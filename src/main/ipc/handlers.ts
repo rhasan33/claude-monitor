@@ -4,11 +4,13 @@ import { IPC_CHANNELS } from '../../shared/types'
 import type {
   AggregatedOverview,
   BudgetSettings,
+  ConfigScope,
   ExportOverviewRequest,
   ExportResult,
   OverviewParams,
   PricingOverride,
   RefreshResult,
+  SkillInput,
   UsageSourceEvent
 } from '../../shared/types'
 import { claudeCodeLocalSource } from '../sources/claude-code-local'
@@ -19,6 +21,7 @@ import { applyPricingOverrides, MODEL_PRICING_TABLE, type PricingRow } from '../
 import { readPricingOverrides, writePricingOverrides } from '../lib/pricingOverridesStore'
 import { readProfile } from '../lib/claudeJson'
 import { readRecentActivity } from '../lib/historyReader'
+import { listSkills, getSkill, saveSkill, deleteSkill } from '../lib/claudeConfig/skillsStore'
 
 // The one piece of "persistence" in v1: the last full scan, held in memory
 // for the process lifetime. Re-parsing the source files is a manual
@@ -125,4 +128,12 @@ export async function registerIpcHandlers(): Promise<void> {
     pricingOverrides = overrides
     notifyDataChanged()
   })
+
+  ipcMain.handle(IPC_CHANNELS.listSkills, (_event, scope: ConfigScope) => listSkills(scope))
+
+  ipcMain.handle(IPC_CHANNELS.getSkill, (_event, scope: ConfigScope, id: string) => getSkill(scope, id))
+
+  ipcMain.handle(IPC_CHANNELS.saveSkill, (_event, scope: ConfigScope, input: SkillInput) => saveSkill(scope, input))
+
+  ipcMain.handle(IPC_CHANNELS.deleteSkill, (_event, scope: ConfigScope, id: string) => deleteSkill(scope, id))
 }

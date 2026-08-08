@@ -11,7 +11,11 @@ import type {
   ExportResult,
   BudgetSettings,
   SessionSummary,
-  PricingOverride
+  PricingOverride,
+  ConfigScope,
+  SkillSummary,
+  SkillDetail,
+  SkillInput
 } from '../shared/types'
 
 const api = {
@@ -31,6 +35,13 @@ const api = {
   getPricingOverrides: (): Promise<PricingOverride[]> => ipcRenderer.invoke(IPC_CHANNELS.getPricingOverrides),
   setPricingOverrides: (overrides: PricingOverride[]): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.setPricingOverrides, overrides),
+  listSkills: (scope: ConfigScope): Promise<SkillSummary[]> => ipcRenderer.invoke(IPC_CHANNELS.listSkills, scope),
+  getSkill: (scope: ConfigScope, id: string): Promise<SkillDetail | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.getSkill, scope, id),
+  saveSkill: (scope: ConfigScope, input: SkillInput): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.saveSkill, scope, input),
+  deleteSkill: (scope: ConfigScope, id: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.deleteSkill, scope, id),
   onDataChanged: (callback: () => void): (() => void) => {
     const listener = (): void => callback()
     ipcRenderer.on(IPC_CHANNELS.dataChanged, listener)
