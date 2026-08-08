@@ -7,6 +7,7 @@ import type {
   ConfigScope,
   ExportOverviewRequest,
   ExportResult,
+  McpServerConfig,
   OverviewParams,
   PricingOverride,
   RefreshResult,
@@ -22,6 +23,12 @@ import { readPricingOverrides, writePricingOverrides } from '../lib/pricingOverr
 import { readProfile } from '../lib/claudeJson'
 import { readRecentActivity } from '../lib/historyReader'
 import { listSkills, getSkill, saveSkill, deleteSkill } from '../lib/claudeConfig/skillsStore'
+import {
+  readGlobalMcpServers,
+  writeGlobalMcpServers,
+  readProjectMcpServers,
+  writeProjectMcpServers
+} from '../lib/claudeConfig/mcpServersStore'
 
 // The one piece of "persistence" in v1: the last full scan, held in memory
 // for the process lifetime. Re-parsing the source files is a manual
@@ -136,4 +143,12 @@ export async function registerIpcHandlers(): Promise<void> {
   ipcMain.handle(IPC_CHANNELS.saveSkill, (_event, scope: ConfigScope, input: SkillInput) => saveSkill(scope, input))
 
   ipcMain.handle(IPC_CHANNELS.deleteSkill, (_event, scope: ConfigScope, id: string) => deleteSkill(scope, id))
+
+  ipcMain.handle(IPC_CHANNELS.getMcpServers, (_event, scope: ConfigScope) =>
+    scope === 'global' ? readGlobalMcpServers() : readProjectMcpServers(scope)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.saveMcpServers, (_event, scope: ConfigScope, servers: McpServerConfig[]) =>
+    scope === 'global' ? writeGlobalMcpServers(servers) : writeProjectMcpServers(scope, servers)
+  )
 }
