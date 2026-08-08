@@ -16,7 +16,8 @@ import type {
   SkillSummary,
   SkillDetail,
   SkillInput,
-  McpServerConfig
+  McpServerConfig,
+  ClaudeSettings
 } from '../shared/types'
 
 const api = {
@@ -47,6 +48,9 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNELS.getMcpServers, scope),
   saveMcpServers: (scope: ConfigScope, servers: McpServerConfig[]): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.saveMcpServers, scope, servers),
+  getSettings: (scope: ConfigScope): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC_CHANNELS.getSettings, scope),
+  saveSettings: (scope: ConfigScope, settings: ClaudeSettings): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.saveSettings, scope, settings),
   onDataChanged: (callback: () => void): (() => void) => {
     const listener = (): void => callback()
     ipcRenderer.on(IPC_CHANNELS.dataChanged, listener)

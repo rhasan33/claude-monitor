@@ -4,6 +4,7 @@ import { IPC_CHANNELS } from '../../shared/types'
 import type {
   AggregatedOverview,
   BudgetSettings,
+  ClaudeSettings,
   ConfigScope,
   ExportOverviewRequest,
   ExportResult,
@@ -29,6 +30,7 @@ import {
   readProjectMcpServers,
   writeProjectMcpServers
 } from '../lib/claudeConfig/mcpServersStore'
+import { readSettings, writeSettings } from '../lib/claudeConfig/settingsStore'
 
 // The one piece of "persistence" in v1: the last full scan, held in memory
 // for the process lifetime. Re-parsing the source files is a manual
@@ -150,5 +152,11 @@ export async function registerIpcHandlers(): Promise<void> {
 
   ipcMain.handle(IPC_CHANNELS.saveMcpServers, (_event, scope: ConfigScope, servers: McpServerConfig[]) =>
     scope === 'global' ? writeGlobalMcpServers(servers) : writeProjectMcpServers(scope, servers)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.getSettings, (_event, scope: ConfigScope) => readSettings(scope))
+
+  ipcMain.handle(IPC_CHANNELS.saveSettings, (_event, scope: ConfigScope, settings: ClaudeSettings) =>
+    writeSettings(scope, settings)
   )
 }
