@@ -12,7 +12,7 @@ function makeEvent(overrides: Partial<UsageSourceEvent> = {}): UsageSourceEvent 
     projectPath: '/Users/dev/project-a',
     timestampMs: Date.parse('2026-08-01T10:00:00.000Z'),
     role: 'assistant',
-    model: 'claude-sonnet-5',
+    model: 'claude-sonnet-4-6',
     usage: {
       inputTokens: 1_000_000,
       outputTokens: 0,

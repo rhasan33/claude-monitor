@@ -15,22 +15,33 @@ export interface PricingRow {
  * VERIFY BEFORE TRUSTING COST NUMBERS: Claude Code's logs don't record a
  * cost field, so every dollar figure in this app is derived from this table.
  * The cache-write/read multipliers below (1.25x / 2x / 0.1x of the input
- * rate) are Anthropic's documented standard, but the base $/Mtok rates are a
- * best-effort seed — check https://www.anthropic.com/pricing and correct
- * this file (it's the only place cost numbers come from) before relying on
- * totals for anything beyond a rough estimate.
+ * rate) are Anthropic's documented standard. The base $/Mtok rates were last
+ * checked against Anthropic's published pricing on 2026-08-07 — re-check
+ * https://www.anthropic.com/pricing and correct this file (it's the only
+ * place cost numbers come from) when rates move or a new model ships.
+ *
+ * A model missing from this table costs $0 and raises a warning banner, so
+ * adding new models here matters as much as keeping the rates current.
  *
  * Rows are matched by exact modelId + effective date range, so a rate
  * change over time is a new row, not an edit to history.
  */
 export const MODEL_PRICING_TABLE: PricingRow[] = [
-  row('claude-opus-5', 15, 75),
-  row('claude-opus-4-5', 15, 75),
-  row('claude-sonnet-5', 3, 15),
-  row('claude-sonnet-4-5', 3, 15),
+  row('claude-fable-5', 10, 50),
+  row('claude-mythos-5', 10, 50),
+  row('claude-opus-5', 5, 25),
+  row('claude-opus-4-8', 5, 25),
+  row('claude-opus-4-7', 5, 25),
+  row('claude-opus-4-6', 5, 25),
+  row('claude-opus-4-5', 5, 25),
+  // Sonnet 5 ran at an introductory $2/$10 through 2026-08-31, so messages from
+  // that window must keep costing the promotional rate after it lapses. The two
+  // ranges don't overlap, so row order here doesn't matter.
+  row('claude-sonnet-5', 2, 10, '2025-01-01', '2026-09-01'),
+  row('claude-sonnet-5', 3, 15, '2026-09-01'),
   row('claude-sonnet-4-6', 3, 15),
-  row('claude-haiku-4-5', 1, 5),
-  row('claude-fable-5', 15, 75)
+  row('claude-sonnet-4-5', 3, 15),
+  row('claude-haiku-4-5', 1, 5)
 ]
 
 /** Anthropic's documented standard cache multipliers, relative to the input rate. */
@@ -42,11 +53,17 @@ function deriveCacheRates(inputPerMtok: number): Pick<PricingRow, 'cacheWrite5mP
   }
 }
 
-function row(modelId: string, inputPerMtok: number, outputPerMtok: number): PricingRow {
+function row(
+  modelId: string,
+  inputPerMtok: number,
+  outputPerMtok: number,
+  effectiveFrom = '2025-01-01',
+  effectiveTo: string | null = null
+): PricingRow {
   return {
     modelId,
-    effectiveFrom: '2025-01-01',
-    effectiveTo: null,
+    effectiveFrom,
+    effectiveTo,
     inputPerMtok,
     outputPerMtok,
     ...deriveCacheRates(inputPerMtok)
@@ -69,15 +86,33 @@ export function applyPricingOverrides(table: PricingRow[], overrides: PricingOve
   return [...kept, ...replaced]
 }
 
+/**
+ * Logs carry either a bare model alias (`claude-opus-4-8`) or a pinned snapshot
+ * with a date suffix (`claude-haiku-4-5-20251001`) — the same model and the
+ * same rates either way. Strip a trailing 8-digit date so one table row covers
+ * both spellings; anything else is left alone.
+ */
+function stripDateSuffix(modelId: string): string {
+  return modelId.replace(/-\d{8}$/, '')
+}
+
 function findPricingRow(
   table: PricingRow[],
   modelId: string,
   timestampMs: number
 ): PricingRow | undefined {
   const iso = new Date(timestampMs).toISOString()
-  return table.find(
-    (r) => r.modelId === modelId && iso >= r.effectiveFrom && (r.effectiveTo === null || iso < r.effectiveTo)
-  )
+  const inEffect = (r: PricingRow): boolean =>
+    iso >= r.effectiveFrom && (r.effectiveTo === null || iso < r.effectiveTo)
+
+  // Exact match wins, so a table entry for a specific snapshot still beats the
+  // alias row it would otherwise fall back to.
+  const exact = table.find((r) => r.modelId === modelId && inEffect(r))
+  if (exact) return exact
+
+  const undated = stripDateSuffix(modelId)
+  if (undated === modelId) return undefined
+  return table.find((r) => r.modelId === undated && inEffect(r))
 }
 
 export interface CostResult {
