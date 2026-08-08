@@ -175,6 +175,60 @@ export interface ExportResult {
   filePath: string | null
 }
 
+/** Which Claude Code config location a claudeConfig read/write applies to. */
+export type ConfigScope = 'global' | { project: string }
+
+export interface SkillFrontmatter {
+  name: string
+  description: string
+}
+
+export interface SkillSummary {
+  /** Directory name under skills/, also the skill's slug/id. */
+  id: string
+  name: string
+  description: string
+  scope: 'global' | 'project'
+  path: string
+}
+
+export interface SkillDetail extends SkillSummary {
+  /** SKILL.md content after the frontmatter block. */
+  instructionsBody: string
+  /** Relative paths of other files in the skill's directory, besides SKILL.md. */
+  supportingFiles: string[]
+}
+
+export interface SkillInput {
+  /** Directory name; must be a safe slug (validated in skillsStore). */
+  id: string
+  name: string
+  description: string
+  instructionsBody: string
+}
+
+export type McpTransport = 'stdio' | 'http' | 'sse'
+
+export interface McpServerConfig {
+  name: string
+  transport: McpTransport
+  command?: string
+  args?: string[]
+  env?: Record<string, string>
+  url?: string
+}
+
+export interface ClaudeSettings {
+  permissions?: {
+    allow?: string[]
+    deny?: string[]
+    [key: string]: unknown
+  }
+  hooks?: Record<string, unknown>
+  /** Raw passthrough for any fields this app's UI doesn't model explicitly. */
+  [key: string]: unknown
+}
+
 export const IPC_CHANNELS = {
   refresh: 'usage:refresh',
   getOverview: 'usage:getOverview',
@@ -188,5 +242,16 @@ export const IPC_CHANNELS = {
   getPricingOverrides: 'usage:getPricingOverrides',
   setPricingOverrides: 'usage:setPricingOverrides',
   /** Push-only: main -> renderer, sent after an auto-refresh. No ipcMain.handle for this one. */
-  dataChanged: 'usage:dataChanged'
+  dataChanged: 'usage:dataChanged',
+
+  listSkills: 'skills:list',
+  getSkill: 'skills:get',
+  saveSkill: 'skills:save',
+  deleteSkill: 'skills:delete',
+
+  getMcpServers: 'mcp:list',
+  saveMcpServers: 'mcp:save',
+
+  getSettings: 'settings:get',
+  saveSettings: 'settings:save'
 } as const
