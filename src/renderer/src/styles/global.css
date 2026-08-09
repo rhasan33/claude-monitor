@@ -629,6 +629,25 @@ th {
   margin-bottom: 16px;
 }
 
+.config-form label.config-form-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-form-checkbox input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.config-form-section-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
 .config-form-list {
   display: flex;
   flex-direction: column;

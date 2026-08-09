@@ -224,6 +224,24 @@ export interface ClaudeSettings {
     deny?: string[]
     [key: string]: unknown
   }
+  sandbox?: {
+    enabled?: boolean
+    autoAllowBashIfSandboxed?: boolean
+    excludedCommands?: string[]
+    filesystem?: {
+      allowWrite?: string[]
+      denyRead?: string[]
+      [key: string]: unknown
+    }
+    network?: {
+      allowedDomains?: string[]
+      deniedDomains?: string[]
+      allowUnixSockets?: string[]
+      allowLocalBinding?: boolean
+      [key: string]: unknown
+    }
+    [key: string]: unknown
+  }
   hooks?: Record<string, unknown>
   /** Raw passthrough for any fields this app's UI doesn't model explicitly. */
   [key: string]: unknown
