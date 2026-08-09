@@ -585,6 +585,17 @@ th {
   color: var(--text-primary);
 }
 
+.config-form-code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--surface-1);
+  white-space: pre;
+  tab-size: 2;
+  resize: vertical;
+  min-height: 280px;
+}
+
 .config-form-hint {
   font-size: 11px;
 }

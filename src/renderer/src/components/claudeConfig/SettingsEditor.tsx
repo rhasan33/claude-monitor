@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { ClaudeSettings } from '../../../../shared/types'
 import { useClaudeConfig } from '../../state/claudeConfigStore'
 
@@ -77,6 +77,8 @@ export function SettingsEditor() {
   const [rawText, setRawText] = useState(() => JSON.stringify(state.settings, null, 2))
   const [rawError, setRawError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const rawTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const pendingCaretRef = useRef<number | null>(null)
 
   const settingsKey = JSON.stringify(state.settings)
   const [seededFor, setSeededFor] = useState(settingsKey)
@@ -144,6 +146,37 @@ export function SettingsEditor() {
     }
   }
 
+  const handleFormatRaw = (): void => {
+    try {
+      setRawText(JSON.stringify(JSON.parse(rawText), null, 2))
+      setRawError(null)
+    } catch (error) {
+      setRawError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  // Tab inserts spaces instead of moving focus. The caret position has to be
+  // restored after React re-renders the controlled textarea's value, so we
+  // stash it and apply it in a layout effect keyed off rawText — only fires
+  // when this handler set it, other rawText changes leave it null (no-op).
+  const handleRawTabKey = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (e.key !== 'Tab') return
+    e.preventDefault()
+    const { selectionStart, selectionEnd, value } = e.currentTarget
+    const nextValue = value.slice(0, selectionStart) + '  ' + value.slice(selectionEnd)
+    pendingCaretRef.current = selectionStart + 2
+    setRawText(nextValue)
+    setRawError(null)
+  }
+
+  useLayoutEffect(() => {
+    if (pendingCaretRef.current !== null && rawTextareaRef.current) {
+      const pos = pendingCaretRef.current
+      rawTextareaRef.current.setSelectionRange(pos, pos)
+      pendingCaretRef.current = null
+    }
+  }, [rawText])
+
   return (
     <div className="panel">
       <h2>Settings</h2>
@@ -160,15 +193,21 @@ export function SettingsEditor() {
           {rawMode ? (
             <div className="config-form">
               <textarea
+                ref={rawTextareaRef}
                 rows={16}
+                className="config-form-code"
                 value={rawText}
                 onChange={(e) => {
                   setRawText(e.target.value)
                   setRawError(null)
                 }}
+                onKeyDown={handleRawTabKey}
               />
               {rawError && <span className="config-form-hint confirm-dialog-danger">Invalid JSON: {rawError}</span>}
               <div className="config-form-actions">
+                <button className="refresh-button" onClick={handleFormatRaw} disabled={saving}>
+                  Format
+                </button>
                 <button className="refresh-button" onClick={handleSaveRaw} disabled={saving}>
                   {saving ? 'Saving…' : 'Save settings'}
                 </button>
