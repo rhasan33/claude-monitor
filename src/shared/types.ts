@@ -131,6 +131,25 @@ export interface SessionSummary {
   endedAt: string
 }
 
+/** A single, deterministically-computed tip for cutting token spend on one project. */
+export interface Suggestion {
+  /** Stable rule key, e.g. 'low-cache-reuse' — not shown to the user, safe to key/test on. */
+  id: string
+  severity: 'info' | 'warning'
+  title: string
+  detail: string
+  estimatedSavingsUsd?: number
+}
+
+/** Per-project efficiency breakdown plus the suggestions derived from it. */
+export interface ProjectInsights {
+  projectPath: string
+  cacheEfficiency: CacheEfficiency
+  byModel: ModelUsage[]
+  toolUsage: ToolUsageCount[]
+  suggestions: Suggestion[]
+}
+
 export interface ActivityItem {
   timestamp: string
   display: string
