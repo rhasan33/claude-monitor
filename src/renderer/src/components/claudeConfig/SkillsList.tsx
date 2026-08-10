@@ -6,10 +6,20 @@ import { SkillEditor } from './SkillEditor'
 export function SkillsList() {
   const { state } = useClaudeConfig()
   const [editing, setEditing] = useState<SkillDetail | 'new' | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   const openForEdit = async (id: string): Promise<void> => {
     const detail = await window.api.getSkill(state.scope, id)
     setEditing(detail)
+  }
+
+  const handleExport = async (): Promise<void> => {
+    setExporting(true)
+    try {
+      await window.api.exportSkills({ scope: state.scope, ids: state.skills.map((skill) => skill.id) })
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (editing === 'new') {
@@ -48,9 +58,18 @@ export function SkillsList() {
           </table>
         </div>
       )}
-      <button className="refresh-button" onClick={() => setEditing('new')}>
-        New skill
-      </button>
+      <div className="config-form-actions">
+        <button className="refresh-button" onClick={() => setEditing('new')}>
+          New skill
+        </button>
+        <button
+          className="refresh-button"
+          onClick={handleExport}
+          disabled={exporting || state.skills.length === 0}
+        >
+          {exporting ? 'Exporting…' : 'Export skills…'}
+        </button>
+      </div>
     </div>
   )
 }

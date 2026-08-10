@@ -1,9 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, writeFile, rm } from 'fs/promises'
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { listSkills, getSkill, saveSkill, deleteSkill } from './skillsStore'
+import { listSkills, getSkill, saveSkill, deleteSkill, exportSkills } from './skillsStore'
 
 async function withTempDir(run: (dir: string) => Promise<void>): Promise<void> {
   const dir = await mkdtemp(join(tmpdir(), 'claude-monitor-test-'))
@@ -94,5 +94,28 @@ test('deleteSkill removes the skill directory', async () => {
 test('deleteSkill on a nonexistent skill is a no-op, not an error', async () => {
   await withTempDir(async (dir) => {
     await assert.doesNotReject(() => deleteSkill('global', 'nonexistent', join(dir, 'skills')))
+  })
+})
+
+test('exportSkills copies each skill folder, including supporting files, into destDir', async () => {
+  await withTempDir(async (dir) => {
+    const skillsDir = join(dir, 'skills')
+    const destDir = join(dir, 'export-dest')
+    await saveSkill('global', { id: 'my-skill', name: 'My Skill', description: 'x', instructionsBody: 'x' }, skillsDir)
+    await writeFile(join(skillsDir, 'my-skill', 'reference.md'), 'extra reference')
+
+    await exportSkills('global', ['my-skill'], destDir, skillsDir)
+
+    const exportedSkillMd = await readFile(join(destDir, 'my-skill', 'SKILL.md'), 'utf-8')
+    assert.match(exportedSkillMd, /name: My Skill/)
+    const exportedReference = await readFile(join(destDir, 'my-skill', 'reference.md'), 'utf-8')
+    assert.equal(exportedReference, 'extra reference')
+  })
+})
+
+test('exportSkills rejects an unsafe id', async () => {
+  await withTempDir(async (dir) => {
+    const skillsDir = join(dir, 'skills')
+    await assert.rejects(() => exportSkills('global', ['../escape'], join(dir, 'export-dest'), skillsDir))
   })
 })

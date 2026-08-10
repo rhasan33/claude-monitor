@@ -8,6 +8,8 @@ import type {
   ConfigScope,
   ExportOverviewRequest,
   ExportResult,
+  ExportSkillsRequest,
+  ExportSkillsResult,
   McpServerConfig,
   OverviewParams,
   PricingOverride,
@@ -24,7 +26,7 @@ import { applyPricingOverrides, MODEL_PRICING_TABLE, type PricingRow } from '../
 import { readPricingOverrides, writePricingOverrides } from '../lib/pricingOverridesStore'
 import { readProfile } from '../lib/claudeJson'
 import { readRecentActivity } from '../lib/historyReader'
-import { listSkills, getSkill, saveSkill, deleteSkill } from '../lib/claudeConfig/skillsStore'
+import { listSkills, getSkill, saveSkill, deleteSkill, exportSkills as exportSkillsToDir } from '../lib/claudeConfig/skillsStore'
 import {
   readGlobalMcpServers,
   writeGlobalMcpServers,
@@ -102,6 +104,36 @@ async function exportOverview(request: ExportOverviewRequest): Promise<ExportRes
   return { filePath }
 }
 
+async function exportSkills(request: ExportSkillsRequest): Promise<ExportSkillsResult> {
+  const focusedWindow = BrowserWindow.getFocusedWindow() ?? undefined
+  const dialogOptions: Electron.OpenDialogOptions = { properties: ['openDirectory', 'createDirectory'] }
+  const { canceled, filePaths } = focusedWindow
+    ? await dialog.showOpenDialog(focusedWindow, dialogOptions)
+    : await dialog.showOpenDialog(dialogOptions)
+  if (canceled || !filePaths[0]) return { destDir: null }
+
+  const destDir = filePaths[0]
+  await exportSkillsToDir(request.scope, request.ids, destDir)
+  return { destDir }
+}
+
+async function exportSandboxConfig(scope: ConfigScope): Promise<ExportResult> {
+  const focusedWindow = BrowserWindow.getFocusedWindow() ?? undefined
+  const dialogOptions = {
+    defaultPath: `sandbox-config-${new Date().toISOString().slice(0, 10)}.json`,
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  }
+  const { canceled, filePath } = focusedWindow
+    ? await dialog.showSaveDialog(focusedWindow, dialogOptions)
+    : await dialog.showSaveDialog(dialogOptions)
+  if (canceled || !filePath) return { filePath: null }
+
+  const settings = await readSettings(scope)
+  await writeFile(filePath, JSON.stringify(settings.sandbox ?? {}, null, 2), 'utf8')
+
+  return { filePath }
+}
+
 export async function registerIpcHandlers(): Promise<void> {
   pricingOverrides = await readPricingOverrides()
 
@@ -151,6 +183,8 @@ export async function registerIpcHandlers(): Promise<void> {
 
   ipcMain.handle(IPC_CHANNELS.deleteSkill, (_event, scope: ConfigScope, id: string) => deleteSkill(scope, id))
 
+  ipcMain.handle(IPC_CHANNELS.exportSkills, (_event, request: ExportSkillsRequest) => exportSkills(request))
+
   ipcMain.handle(IPC_CHANNELS.getMcpServers, (_event, scope: ConfigScope) =>
     scope === 'global' ? readGlobalMcpServers() : readProjectMcpServers(scope)
   )
@@ -164,4 +198,6 @@ export async function registerIpcHandlers(): Promise<void> {
   ipcMain.handle(IPC_CHANNELS.saveSettings, (_event, scope: ConfigScope, settings: ClaudeSettings) =>
     writeSettings(scope, settings)
   )
+
+  ipcMain.handle(IPC_CHANNELS.exportSandboxConfig, (_event, scope: ConfigScope) => exportSandboxConfig(scope))
 }

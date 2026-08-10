@@ -77,6 +77,7 @@ export function SettingsEditor() {
   const [rawText, setRawText] = useState(() => JSON.stringify(state.settings, null, 2))
   const [rawError, setRawError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [exportingSandbox, setExportingSandbox] = useState(false)
   const rawTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const pendingCaretRef = useRef<number | null>(null)
 
@@ -143,6 +144,15 @@ export function SettingsEditor() {
       await saveSettings(parsed)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleExportSandbox = async (): Promise<void> => {
+    setExportingSandbox(true)
+    try {
+      await window.api.exportSandboxConfig(state.scope)
+    } finally {
+      setExportingSandbox(false)
     }
   }
 
@@ -218,7 +228,12 @@ export function SettingsEditor() {
               <StringListEditor label="Allowed tools" values={allow} onChange={setAllow} />
               <StringListEditor label="Denied tools" values={deny} onChange={setDeny} />
 
-              <h3 className="config-form-section-title">Sandbox</h3>
+              <div className="config-form-section-title-row">
+                <h3 className="config-form-section-title">Sandbox</h3>
+                <button className="refresh-button" onClick={handleExportSandbox} disabled={exportingSandbox}>
+                  {exportingSandbox ? 'Exporting…' : 'Export sandbox config'}
+                </button>
+              </div>
               <label className="config-form-checkbox">
                 <input
                   type="checkbox"

@@ -9,6 +9,8 @@ import type {
   RefreshResult,
   ExportOverviewRequest,
   ExportResult,
+  ExportSkillsRequest,
+  ExportSkillsResult,
   BudgetSettings,
   SessionSummary,
   ProjectInsights,
@@ -47,6 +49,8 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNELS.saveSkill, scope, input),
   deleteSkill: (scope: ConfigScope, id: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.deleteSkill, scope, id),
+  exportSkills: (request: ExportSkillsRequest): Promise<ExportSkillsResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.exportSkills, request),
   getMcpServers: (scope: ConfigScope): Promise<McpServerConfig[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.getMcpServers, scope),
   saveMcpServers: (scope: ConfigScope, servers: McpServerConfig[]): Promise<void> =>
@@ -54,6 +58,8 @@ const api = {
   getSettings: (scope: ConfigScope): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC_CHANNELS.getSettings, scope),
   saveSettings: (scope: ConfigScope, settings: ClaudeSettings): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.saveSettings, scope, settings),
+  exportSandboxConfig: (scope: ConfigScope): Promise<ExportResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.exportSandboxConfig, scope),
   onDataChanged: (callback: () => void): (() => void) => {
     const listener = (): void => callback()
     ipcRenderer.on(IPC_CHANNELS.dataChanged, listener)

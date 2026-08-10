@@ -718,6 +718,17 @@ th {
   margin: 4px 0 0;
 }
 
+.config-form-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.config-form-section-title-row .config-form-section-title {
+  margin: 0;
+}
+
 .config-form-list {
   display: flex;
   flex-direction: column;

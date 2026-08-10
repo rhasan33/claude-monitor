@@ -1,4 +1,4 @@
-import { readFile, readdir, rm } from 'fs/promises'
+import { cp, readFile, readdir, rm } from 'fs/promises'
 import { join } from 'path'
 import type { ConfigScope, SkillDetail, SkillInput, SkillSummary } from '../../../shared/types'
 import { paths, projectClaudePaths } from '../paths'
@@ -134,4 +134,18 @@ export async function deleteSkill(scope: ConfigScope, id: string, skillsDirOverr
   assertSafeSkillId(id)
   const skillsDir = resolveSkillsDir(scope, skillsDirOverride)
   await rm(join(skillsDir, id), { recursive: true, force: true })
+}
+
+/** Copies each skill's directory (SKILL.md + supporting files) into its own folder under destDir. */
+export async function exportSkills(
+  scope: ConfigScope,
+  ids: string[],
+  destDir: string,
+  skillsDirOverride?: string
+): Promise<void> {
+  const skillsDir = resolveSkillsDir(scope, skillsDirOverride)
+  for (const id of ids) {
+    assertSafeSkillId(id)
+    await cp(join(skillsDir, id), join(destDir, id), { recursive: true })
+  }
 }

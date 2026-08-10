@@ -229,6 +229,16 @@ export interface SkillInput {
   instructionsBody: string
 }
 
+export interface ExportSkillsRequest {
+  scope: ConfigScope
+  ids: string[]
+}
+
+export interface ExportSkillsResult {
+  /** Null when the user canceled the destination-folder dialog. */
+  destDir: string | null
+}
+
 export type McpTransport = 'stdio' | 'http' | 'sse'
 
 export interface McpServerConfig {
@@ -289,10 +299,12 @@ export const IPC_CHANNELS = {
   getSkill: 'skills:get',
   saveSkill: 'skills:save',
   deleteSkill: 'skills:delete',
+  exportSkills: 'skills:export',
 
   getMcpServers: 'mcp:list',
   saveMcpServers: 'mcp:save',
 
   getSettings: 'settings:get',
-  saveSettings: 'settings:save'
+  saveSettings: 'settings:save',
+  exportSandboxConfig: 'settings:exportSandbox'
 } as const
