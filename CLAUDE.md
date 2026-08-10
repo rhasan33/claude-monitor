@@ -37,16 +37,16 @@ A `Makefile` wraps npm scripts for the packaged macOS app: `make open` (build if
 
 ### Releases
 
-Releases are published as GitHub Releases tagged `vX.Y.Z` (e.g. [v0.1.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.1.0), [v0.2.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.2.0)). `electron-builder.yml` builds both an unpacked `dir` target and the `dmg` target for `arm64` — every tagged release should have a `.dmg` asset.
+Releases are published as GitHub Releases tagged `vX.Y.Z` (e.g. [v0.1.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.1.0), [v0.2.0](https://github.com/rhasan33/claude-monitor/releases/tag/v0.2.0)). `electron-builder.yml` builds both an unpacked `dir` target and the `dmg` target for `universal` (Intel + Apple Silicon in one binary) — every tagged release should have a `.dmg` asset.
 
 Pushing a `v*.*.*` tag is *supposed* to trigger `.github/workflows/release.yml` (lint/typecheck/test, then `npm run package`, then attach `release/*.dmg` to the release via `softprops/action-gh-release`). As of `v0.2.0`, GitHub Actions is not triggering any runs at all for this repo (`push` events to `main` and tags both produced zero runs, `CI` included) — an account-level issue, not a problem with the workflow files. Until that's resolved, **publish releases manually**:
 
 ```sh
 git tag vX.Y.Z && git push origin vX.Y.Z
-make dmg   # or: npm run package — produces release/Claude Monitor-X.Y.Z-arm64.dmg
-gh release create vX.Y.Z "release/Claude Monitor-X.Y.Z-arm64.dmg" --title vX.Y.Z --notes "..."
+make dmg   # or: npm run package — produces release/Claude Monitor-X.Y.Z-universal.dmg
+gh release create vX.Y.Z "release/Claude Monitor-X.Y.Z-universal.dmg" --title vX.Y.Z --notes "..."
 # if a release for the tag already exists without an asset:
-gh release upload vX.Y.Z "release/Claude Monitor-X.Y.Z-arm64.dmg"
+gh release upload vX.Y.Z "release/Claude Monitor-X.Y.Z-universal.dmg"
 ```
 
 Before trusting the automated path again, confirm on GitHub (Settings → Actions → General, and Settings → Billing) that runs are actually being triggered — check `gh api repos/rhasan33/claude-monitor/actions/runs --jq '.total_count'` before and after a throwaway push.
@@ -67,8 +67,9 @@ Three Electron processes, connected by a narrow typed IPC boundary:
 2. `src/main/ipc/handlers.ts` holds the last full scan in memory (`cachedEvents`) for the process lifetime — there's no background job or persistence; a client-triggered `refresh()` (IPC `usage:refresh`) re-scans from disk.
 3. `src/main/lib/aggregator.ts` turns raw events into `AggregatedOverview` (daily/model/project rollups, cache efficiency, tool usage), applying `OverviewParams` filters (date range, project, model).
 4. `src/main/lib/pricing.ts` is the versioned cost table — Claude Code's logs don't record cost, so `costUsd` everywhere is derived from tokens × this table. This is the file most likely to need updates as Anthropic's published rates change.
-5. `src/main/lib/claudeJson.ts` reads `~/.claude.json` for profile/account info; `src/main/lib/historyReader.ts` reads `~/.claude/history.jsonl` for the recent-activity feed. Paths are centralized in `src/main/lib/paths.ts`.
-6. Renderer calls `window.api.*` (defined in `src/preload/index.ts`), state lives in `src/renderer/src/state/store.tsx`, rendered by components in `src/renderer/src/components/`.
+5. `src/main/lib/suggestions.ts` derives per-project efficiency suggestions (low cache reuse, model cost concentration, high tokens/message vs. baseline) by calling `buildOverview` scoped to one project plus once unscoped for a baseline — no new aggregation logic, no LLM calls, just rules over the shape `buildOverview` already returns. Exposed via IPC `usage:getProjectInsights`, rendered by `ProjectInsightsPanel` in the project drilldown.
+6. `src/main/lib/claudeJson.ts` reads `~/.claude.json` for profile/account info; `src/main/lib/historyReader.ts` reads `~/.claude/history.jsonl` for the recent-activity feed. Paths are centralized in `src/main/lib/paths.ts`.
+7. Renderer calls `window.api.*` (defined in `src/preload/index.ts`), state lives in `src/renderer/src/state/store.tsx`, rendered by components in `src/renderer/src/components/`.
 
 ### Pluggable usage sources
 

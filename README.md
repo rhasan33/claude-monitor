@@ -21,6 +21,7 @@ Under active development. Current state:
 - [x] IPC bridge between the main process and the renderer
 - [x] Dashboard UI (summary cards, token/cache/model/project charts, activity feed, filters)
 - [x] Claude Code Config manager (view/edit skills, MCP servers, and settings — global and per-project)
+- [x] Per-project efficiency suggestions (cache reuse, model cost concentration, verbosity — shown in the project drilldown)
 - [x] Packaged build (macOS)
 
 ## Requirements
@@ -87,6 +88,16 @@ The "Claude Code Config" tab is the one part of the app that writes, not just re
 - Settings/permissions: `~/.claude/settings.json` and `<project>/.claude/settings.json`
 
 Writes go through an atomic temp-file-then-rename (`src/main/lib/atomicWrite.ts`) so a crash mid-write can't leave a config file corrupted, and destructive actions (deleting a skill, removing an MCP server) require confirmation. Still no network calls — everything happens on files already on your machine.
+
+### Efficiency suggestions
+
+Clicking a project in the "By project" table opens a drilldown with concrete, locally-computed tips for cutting that project's token spend — no LLM call involved, just deterministic rules over the same aggregates the rest of the dashboard already shows:
+
+- **Low cache reuse** — this project is creating more prompt cache than it's reading back, meaning context keeps getting re-primed instead of reused.
+- **Model cost concentration** — one model accounts for most of the project's spend, which may be worth a lighter model for simpler tasks.
+- **Verbosity vs. baseline** — this project's average input tokens per message is well above your typical project, often a sign of large pasted content or file reads.
+
+Stats (cache reuse ratio, top model share, tokens/message) are always shown regardless of whether a suggestion fires, so the panel is informative even when nothing needs attention.
 
 ## Contributing
 
