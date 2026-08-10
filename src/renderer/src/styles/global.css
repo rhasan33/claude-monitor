@@ -303,6 +303,65 @@ table input[type='number'] {
   color: var(--serious);
 }
 
+.suggestion-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.suggestion-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-card {
+  border-left: 3px solid var(--text-secondary);
+  background: var(--page);
+  border-radius: 6px;
+  padding: 10px 12px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.suggestion-card--warning {
+  border-left-color: var(--warning);
+}
+
+.suggestion-card--leaving {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.suggestion-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.suggestion-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.suggestion-savings {
+  font-size: 12px;
+  color: var(--good);
+  margin-top: 6px;
+}
+
 .heatmap {
   display: flex;
   flex-direction: column;

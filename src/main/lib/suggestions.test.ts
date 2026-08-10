@@ -168,3 +168,15 @@ test('returns no suggestions for a project that looks efficient', () => {
   const ids = suggestionIds([makeEvent()])
   assert.deepEqual(ids, [])
 })
+
+test('exposes project totals and the all-projects baseline for display, regardless of whether any rule fires', () => {
+  const events = [
+    makeEvent({ projectPath: '/a', usage: { ...makeEvent().usage!, inputTokens: 40_000 } }),
+    makeEvent({ projectPath: '/b', usage: { ...makeEvent().usage!, inputTokens: 10_000 } })
+  ]
+  const insights = buildProjectInsights(events, '/a')
+  assert.equal(insights.totals.inputTokens, 40_000)
+  assert.equal(insights.totals.messageCount, 1)
+  // baseline is the average across *all* events (40k + 10k) / 2 messages = 25k
+  assert.equal(insights.baselineAvgInputTokensPerMessage, 25_000)
+})

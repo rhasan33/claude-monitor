@@ -8,6 +8,7 @@ import { TokenUsageChart } from './components/TokenUsageChart'
 import { ModelBreakdownChart } from './components/ModelBreakdownChart'
 import { ProjectBreakdownTable } from './components/ProjectBreakdownTable'
 import { SessionList } from './components/SessionList'
+import { ProjectInsightsPanel } from './components/ProjectInsightsPanel'
 import { CacheEfficiencyPanel } from './components/CacheEfficiencyPanel'
 import { CacheEfficiencyTrendChart } from './components/CacheEfficiencyTrendChart'
 import { ActivityTimeline } from './components/ActivityTimeline'
@@ -26,6 +27,10 @@ export default function App() {
   const { state } = useApp()
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null)
   const [activeView, setActiveView] = useState<'analytics' | 'config'>('analytics')
+
+  const handleSelectProject = (project: ProjectSummary): void => {
+    setSelectedProject((prev) => (prev?.projectPath === project.projectPath ? null : project))
+  }
 
   return (
     <div className="app">
@@ -87,13 +92,16 @@ export default function App() {
               </div>
               <CacheEfficiencyTrendChart daily={state.overview.daily} />
               <ActivityHeatmap cells={state.overview.activityHeatmap} />
-              <ProjectBreakdownTable projects={state.overview.byProject} onSelectProject={setSelectedProject} />
+              <ProjectBreakdownTable projects={state.overview.byProject} onSelectProject={handleSelectProject} />
               {selectedProject && (
-                <SessionList
-                  key={selectedProject.projectPath}
-                  project={selectedProject}
-                  onClose={() => setSelectedProject(null)}
-                />
+                <>
+                  <ProjectInsightsPanel key={`insights-${selectedProject.projectPath}`} project={selectedProject} />
+                  <SessionList
+                    key={`sessions-${selectedProject.projectPath}`}
+                    project={selectedProject}
+                    onClose={() => setSelectedProject(null)}
+                  />
+                </>
               )}
               <div className="grid grid-2">
                 <ToolUsageChart toolUsage={state.overview.toolUsage} />

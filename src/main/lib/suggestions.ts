@@ -97,9 +97,11 @@ export function buildProjectInsights(
 
   return {
     projectPath,
+    totals: project.totals,
     cacheEfficiency: project.cacheEfficiency,
     byModel: project.byModel,
     toolUsage: project.toolUsage,
+    baselineAvgInputTokensPerMessage: avgInputTokensPerMessage(baseline),
     suggestions
   }
 }

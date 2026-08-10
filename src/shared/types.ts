@@ -144,9 +144,12 @@ export interface Suggestion {
 /** Per-project efficiency breakdown plus the suggestions derived from it. */
 export interface ProjectInsights {
   projectPath: string
+  totals: OverviewTotals
   cacheEfficiency: CacheEfficiency
   byModel: ModelUsage[]
   toolUsage: ToolUsageCount[]
+  /** Average input tokens/message across all projects — the comparison point for this project's own average. */
+  baselineAvgInputTokensPerMessage: number
   suggestions: Suggestion[]
 }
 
