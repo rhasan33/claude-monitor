@@ -276,6 +276,7 @@ export const IPC_CHANNELS = {
   getBudget: 'usage:getBudget',
   setBudget: 'usage:setBudget',
   getSessions: 'usage:getSessions',
+  getProjectInsights: 'usage:getProjectInsights',
   getPricingOverrides: 'usage:getPricingOverrides',
   setPricingOverrides: 'usage:setPricingOverrides',
   /** Push-only: main -> renderer, sent after an auto-refresh. No ipcMain.handle for this one. */

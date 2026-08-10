@@ -17,6 +17,7 @@ import type {
 } from '../../shared/types'
 import { claudeCodeLocalSource } from '../sources/claude-code-local'
 import { buildOverview, buildSessionSummaries } from '../lib/aggregator'
+import { buildProjectInsights } from '../lib/suggestions'
 import { overviewToCsv, overviewToJson } from '../lib/exportOverview'
 import { readBudget, writeBudget } from '../lib/budgetStore'
 import { applyPricingOverrides, MODEL_PRICING_TABLE, type PricingRow } from '../lib/pricing'
@@ -128,6 +129,10 @@ export async function registerIpcHandlers(): Promise<void> {
 
   ipcMain.handle(IPC_CHANNELS.getSessions, (_event, projectPath: string) =>
     buildSessionSummaries(cachedEvents, projectPath, currentPricingTable())
+  )
+
+  ipcMain.handle(IPC_CHANNELS.getProjectInsights, (_event, projectPath: string) =>
+    buildProjectInsights(cachedEvents, projectPath, currentPricingTable())
   )
 
   ipcMain.handle(IPC_CHANNELS.getPricingOverrides, () => pricingOverrides)

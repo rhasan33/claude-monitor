@@ -11,6 +11,7 @@ import type {
   ExportResult,
   BudgetSettings,
   SessionSummary,
+  ProjectInsights,
   PricingOverride,
   ConfigScope,
   SkillSummary,
@@ -34,6 +35,8 @@ const api = {
   setBudget: (budget: BudgetSettings): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.setBudget, budget),
   getSessions: (projectPath: string): Promise<SessionSummary[]> =>
     ipcRenderer.invoke(IPC_CHANNELS.getSessions, projectPath),
+  getProjectInsights: (projectPath: string): Promise<ProjectInsights> =>
+    ipcRenderer.invoke(IPC_CHANNELS.getProjectInsights, projectPath),
   getPricingOverrides: (): Promise<PricingOverride[]> => ipcRenderer.invoke(IPC_CHANNELS.getPricingOverrides),
   setPricingOverrides: (overrides: PricingOverride[]): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.setPricingOverrides, overrides),
